@@ -72,8 +72,12 @@ export interface FeedbackRow {
 }
 
 export interface DashboardToday {
+  /** The run whose results Today shows (see dashboardDisplayRun). */
   latestRunId?: string;
   latestRunStatus?: string;
+  /** A newer scan that is still running, while Today keeps showing the last finished one. */
+  activeRunId?: string;
+  activeRunStartedAt?: string;
   nextScheduledScan?: string;
   scanMode: string;
   xPostsUsedToday: number;

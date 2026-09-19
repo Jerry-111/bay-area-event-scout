@@ -2,7 +2,7 @@ import { searchExclusions, type ScoutProfile } from "@event-scout/shared";
 import type { QuerySpec } from "./types.js";
 import { buildKnownSourceQueries, knownLumaSeedUrls } from "./known-sources.js";
 import { registrySourcesForProfile, sourceTypeForRegistryKind } from "./source-registry.js";
-import type { RegistrySource } from "./source-registry.js";
+import type { RegistrySource, RegistrySourcePriority } from "./source-registry.js";
 
 const DEFAULT_RESULTS_PER_QUERY = 12;
 const REGISTRY_RESULTS_PER_QUERY = 5;
@@ -358,6 +358,8 @@ function buildRegistryQueryPack(
   const searchQueries: QuerySpec[] = sources
     .filter((source) => source.queryText && source.kind !== "x_account")
     .filter((source) => isRegistrySourceEligible(source, now, options.scanWindow, "exa"))
+    // A small search budget only reaches the first few of these, so the most important go first.
+    .sort(compareRegistrySourcesForSearch)
     .map((source) => ({
       id: `registry-search-${source.id}-${year}`,
       group: source.kind === "luma_calendar" ? "luma" : "source_discovery",
@@ -429,6 +431,21 @@ function isRegistrySourceEligible(
   }
   if (source.priority === "high") return slot % 3 === windowIndex;
   return slot % 6 === windowIndex;
+}
+
+function compareRegistrySourcesForSearch(left: RegistrySource, right: RegistrySource): number {
+  return (
+    priorityRank(right.priority) - priorityRank(left.priority) ||
+    (right.sourceScore ?? 0) - (left.sourceScore ?? 0) ||
+    left.id.localeCompare(right.id)
+  );
+}
+
+function priorityRank(priority: RegistrySourcePriority): number {
+  if (priority === "must_scan") return 3;
+  if (priority === "high") return 2;
+  if (priority === "medium") return 1;
+  return 0;
 }
 
 function scanWindowForTime(scanTime: string | undefined): ScanWindow | undefined {

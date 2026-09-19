@@ -80,7 +80,7 @@ key 放在哪里：在自己电脑上，配置时（`npm start`）会写进 `.en
 
 其他选择（[全部选项](llm-providers.md)）：
 
-- **Gemini 免费额度：** [aistudio.google.com](https://aistudio.google.com/app/apikey) → **Create API key**（以 `AIza` 开头）→ `LLM_PROVIDER=gemini`。在 [aistudio.google.com/rate-limit](https://aistudio.google.com/rate-limit) 查看你的限速；一次扫描会在几分钟内调用 25–65 次。
+- **Gemini 免费额度：** [aistudio.google.com](https://aistudio.google.com/app/apikey) → **Create API key**（以 `AIza` 开头）→ `LLM_PROVIDER=gemini`。在 [aistudio.google.com/rate-limit](https://aistudio.google.com/rate-limit) 查看你的限速；一次扫描会在几分钟内调用 25–65 次，同时最多 4 个。如果扫描因为限速报错停下，把 `MAX_LLM_EXTRACT_CONCURRENCY` 和 `MAX_LLM_SCORE_CONCURRENCY` 都设成 `1`。
 - **Anthropic：** [console.anthropic.com](https://console.anthropic.com) → **Settings → API Keys → Create Key**（以 `sk-ant-` 开头）→ `LLM_PROVIDER=anthropic`。在 **Billing** 里充值。
 - **通义千问（阿里云百炼 / Model Studio）：** 按阿里云官方的[获取 API Key（国际站）](https://www.alibabacloud.com/help/en/model-studio/get-api-key)操作，对应 `LLM_PROVIDER=dashscope-intl`；或者[中国大陆版说明](https://help.aliyun.com/zh/model-studio/get-api-key)，对应 `LLM_PROVIDER=dashscope`。两个地域的账号和 key 互不通用。
 - **DeepSeek：** [platform.deepseek.com](https://platform.deepseek.com/api_keys) → **创建 API key** → `LLM_PROVIDER=deepseek`。

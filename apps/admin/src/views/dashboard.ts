@@ -96,7 +96,7 @@ export function renderDashboard(dashboard: AdminDashboard, options: DashboardVie
       </div>
       <div class="metaline">
         <span class="status status-${dashboard.health.status}">${escapeHtml(titleCase(dashboard.health.status))}</span>
-        ${renderLastRunMeta(dashboard.runs[0])}
+        ${renderLastRunMeta(dashboard)}
       </div>
       <div class="tabs" role="tablist" aria-label="Dashboard sections">
         ${tabs.map((tab, index) => renderTabButton(tab, index === 0)).join("")}
@@ -118,10 +118,18 @@ function renderTabButton(tab: TabDefinition, selected: boolean): string {
   return `<button type="button" class="tab" role="tab" id="tab-${tab.id}" aria-controls="panel-${tab.id}" aria-selected="${selected}" onclick="showTab('${tab.id}')">${escapeHtml(tab.label)}${badge}</button>`;
 }
 
-function renderLastRunMeta(run: ScoutRun | undefined): string {
-  if (!run) return `<span>No scan has run yet</span>`;
-  const relative = formatRelative(run.startedAt);
-  return `<span>Last scan ${escapeHtml(formatTimeOnly(run.startedAt))}${relative ? ` (${escapeHtml(relative)})` : ""}</span>`;
+function renderLastRunMeta(dashboard: AdminDashboard): string {
+  const shown = dashboard.runs.find((run) => run.id === dashboard.today.latestRunId) ?? dashboard.runs[0];
+  if (!shown) return `<span>No scan has run yet</span>`;
+  const when = (iso: string): string => {
+    const relative = formatRelative(iso);
+    return `${escapeHtml(formatTimeOnly(iso))}${relative ? ` (${escapeHtml(relative)})` : ""}`;
+  };
+  if (dashboard.today.activeRunStartedAt) {
+    return `<span>New scan running since ${when(dashboard.today.activeRunStartedAt)} · showing the ${escapeHtml(formatTimeOnly(shown.startedAt))} scan</span>`;
+  }
+  if (shown.status === "running") return `<span>Scan running since ${when(shown.startedAt)}</span>`;
+  return `<span>Last scan ${when(shown.startedAt)}</span>`;
 }
 
 function dataSourceLabel(dataSource: DashboardDataSource): string {
@@ -428,12 +436,16 @@ function renderRuns(dashboard: AdminDashboard): string {
           <span>${escapeHtml(formatDuration(run))}</span>
           <span>${escapeHtml(run.stats.scanMode)} scan</span>
           <span>X ${run.stats.xEnabled ? `on · ${run.stats.xPostsRead} posts read · ${run.stats.xBudgetRemaining} left` : "off"}</span>
+          ${run.stats.extractionStoppedByTimeBudget || run.stats.scoringStoppedByTimeBudget ? `<span>stopped early: time limit</span>` : ""}
         </div>
         ${run.error ? `<div class="banner banner-warning">${escapeHtml(run.error)}</div>` : ""}
         <div class="kv">
           ${kv("Links found", run.stats.candidatesFound)}
           ${kv("Dropped", run.stats.rejectedCandidates)}
-          ${kv("Pages read", run.stats.pagesInspected)}
+          ${run.stats.extractionCandidatesAttempted === undefined
+            ? kv("Pages read", run.stats.pagesInspected)
+            : kv("Pages read", `${run.stats.extractionCandidatesAttempted} of ${run.stats.extractionCandidatesLimit ?? run.stats.extractionCandidatesAttempted}`)}
+          ${run.stats.extractionConcurrency ? kv("In parallel", `${run.stats.extractionConcurrency} at a time`) : ""}
           ${kv("Events parsed", run.stats.eventsExtracted)}
           ${kv("Events scored", run.stats.scoresCreated)}
           ${kv("Recommended", run.stats.recommendationsCreated)}

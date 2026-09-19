@@ -185,6 +185,20 @@ export interface RunStats {
   xEnabled: boolean;
   xPostsRead: number;
   xBudgetRemaining: number;
+  /** Extraction and scoring detail, recorded by real scans for the dashboard's Health tab. */
+  extractionCandidatesAttempted?: number;
+  extractionCandidatesLimit?: number;
+  extractionConcurrency?: number;
+  extractionStoppedByTimeBudget?: boolean;
+  firecrawlPagesUsed?: number;
+  rawEventsExtracted?: number;
+  dedupedEventsExtracted?: number;
+  futureWindowEvents?: number;
+  dateWindowRejected?: Record<string, number>;
+  scoringEventsAttempted?: number;
+  scoringEventsLimit?: number;
+  scoringConcurrency?: number;
+  scoringStoppedByTimeBudget?: boolean;
 }
 
 /**
@@ -218,7 +232,11 @@ export interface BudgetCaps {
   maxXPostsPerDay: number;
   maxFirecrawlPagesPerRun: number;
   maxLlmExtractCandidatesPerRun: number;
+  /** Event pages read at the same time (MAX_LLM_EXTRACT_CONCURRENCY, default 4). */
+  maxLlmExtractConcurrency?: number;
   maxLlmScoreEventsPerRun: number;
+  /** Events scored at the same time (MAX_LLM_SCORE_CONCURRENCY, default 4). */
+  maxLlmScoreConcurrency?: number;
   maxLlmScoreEventPercent?: number;
   maxRecommendationsPerRun: number;
 }
@@ -332,7 +350,9 @@ export function loadEnv(env: NodeJS.ProcessEnv, options: LoadEnvOptions = {}): A
       maxXPostsPerDay,
       maxFirecrawlPagesPerRun: numberValue(env, "MAX_FIRECRAWL_PAGES_PER_RUN", budget.firecrawlPages),
       maxLlmExtractCandidatesPerRun: numberValue(env, "MAX_LLM_EXTRACT_CANDIDATES_PER_RUN", budget.llmExtractions),
+      maxLlmExtractConcurrency: numberValue(env, "MAX_LLM_EXTRACT_CONCURRENCY", 4),
       maxLlmScoreEventsPerRun: numberValue(env, "MAX_LLM_SCORE_EVENTS_PER_RUN", budget.llmScores),
+      maxLlmScoreConcurrency: numberValue(env, "MAX_LLM_SCORE_CONCURRENCY", 4),
       maxLlmScoreEventPercent: numberValue(env, "MAX_LLM_SCORE_EVENT_PERCENT", 30),
       maxRecommendationsPerRun: numberValue(env, "MAX_RECOMMENDATIONS_PER_RUN", 10)
     },

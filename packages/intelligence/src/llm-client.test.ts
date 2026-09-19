@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { loadEnv, normalizeLegacyQwenBaseUrl, type AppEnv } from "@event-scout/shared";
-import { buildChatCompletionsBody, buildResponsesBody, callLlm } from "./llm-client.js";
+import { buildChatCompletionsBody, buildResponsesBody, callLlm, LlmServiceError } from "./llm-client.js";
 
 interface CapturedRequest {
   url: string;
@@ -148,6 +148,25 @@ test("callLlm treats an Anthropic refusal as a failure so the next model is trie
       await assert.rejects(callLlm({ env, model: "claude-sonnet-5", prompt: "score it" }), /declined the request/);
     }
   );
+});
+
+test("provider errors keep their HTTP status, code, and message in both error formats", async () => {
+  const env = realEnv({ LLM_PROVIDER: "dashscope", LLM_API_KEY: "key" });
+  for (const payload of [
+    { code: "AccessDenied.Unpurchased", message: "Access to model denied" },
+    { error: { code: "AccessDenied.Unpurchased", message: "Access to model denied" } }
+  ]) {
+    await withFetch([jsonResponse(payload, 403)], async () => {
+      await assert.rejects(
+        callLlm({ env, model: "qwen-plus", prompt: "hi" }),
+        (error: unknown) =>
+          error instanceof LlmServiceError &&
+          error.status === 403 &&
+          error.isAccountOrConfigProblem &&
+          /AccessDenied\.Unpurchased: Access to model denied/.test(error.message)
+      );
+    });
+  }
 });
 
 function realEnv(values: NodeJS.ProcessEnv): AppEnv {

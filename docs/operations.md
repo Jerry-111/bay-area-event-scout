@@ -50,6 +50,9 @@ What each costs is in [setup and costs](setup-and-costs.md#what-it-costs).
 
 Setting any `MAX_*` variable overrides the budget's value for that cap. Other caps:
 
+- `MAX_LLM_EXTRACT_CONCURRENCY=4` and `MAX_LLM_SCORE_CONCURRENCY=4`: pages read and events scored at
+  the same time (at most 6). Lower them if your LLM tier rate-limits you.
+
 - `MAX_AGENT_GENERATED_EXA_QUERIES` caps planner-generated Exa queries (default: half of the Exa budget).
 - `MAX_AGENT_GENERATED_X_QUERIES=0` keeps X on the scheduled official API searches.
 - `MAX_EXPLORATION_BUDGET_PERCENT=50` share of the Exa budget reserved for planner queries.
@@ -61,6 +64,12 @@ also search X.
 
 Timeouts: `EXA_TIMEOUT_MS`, `X_TIMEOUT_MS`, `FIRECRAWL_TIMEOUT_MS`, `PAGE_FETCH_TIMEOUT_MS`,
 `LLM_TIMEOUT_MS`, `TELEGRAM_TIMEOUT_MS`, `POSTGRES_CONNECTION_TIMEOUT_MS`, `POSTGRES_QUERY_TIMEOUT_MS`.
+
+When the LLM provider refuses requests outright (HTTP 401, 402, 403, or 404: a wrong key, no
+billing, no access to the model, a wrong model name or endpoint), a scan stops at once and fails
+with the provider's reason, rather than trying every page and finishing with zero events. Rate
+limiting that persists after retries stops it after three pages, and a scan where every page fails
+also fails with the first error.
 
 ## Database
 

@@ -6,7 +6,12 @@ import {
   discoverCandidatesWithStats as discoverCandidateFixtures,
   type QuerySpec
 } from "@event-scout/discovery";
-import { areLikelyDuplicateEvents, processCandidates, type DedupeComparableEvent } from "@event-scout/intelligence";
+import {
+  areLikelyDuplicateEvents,
+  processCandidatesWithStats,
+  type DedupeComparableEvent,
+  type ProcessCandidatesStats
+} from "@event-scout/intelligence";
 import { sendDigest as sendDigestFixture } from "@event-scout/notify";
 import { logger as triggerLogger, metadata as triggerMetadata, type RunMetadata } from "@trigger.dev/sdk";
 import {
@@ -213,12 +218,24 @@ export async function runDailyScout(options: RunDailyScoutOptions = { runType: "
       durationMs: Date.now() - candidateSaveStart,
       candidatesSaved: candidateUrls.length
     });
+    // If a later stage fails, the run still records how far discovery got.
+    failureStats = {
+      ...failureStats,
+      candidatesFound: candidateUrls.length,
+      rejectedCandidates: candidateUrls.filter((candidate) => candidate.status === "rejected").length,
+      xPostsRead: discovery.stats.xPostsRead,
+      xBudgetRemaining: discovery.stats.xBudgetRemaining
+    };
 
+    // Loaded before extraction so candidates already recommended in earlier runs go to the back
+    // of the queue: the extraction budget is spent on events the person has not seen yet.
+    const recommendationHistory = await loadRecommendationHistory(store);
     const extractionStart = Date.now();
     const extractableCandidatesBeforeDedupe = rawCandidates.filter((candidate) => candidate.status !== "rejected" && candidate.status !== "error");
     const extractableCandidates = rankCandidatesForExtraction(
       extractableCandidatesBeforeDedupe,
-      env.profile
+      env.profile,
+      recommendationHistory
     );
     const duplicateCandidatesSkipped = Math.max(0, extractableCandidatesBeforeDedupe.length - extractableCandidates.length);
     logger.info("extraction and scoring started", {
@@ -226,18 +243,16 @@ export async function runDailyScout(options: RunDailyScoutOptions = { runType: "
       candidatesToProcess: extractableCandidates.length,
       candidatesBeforeUrlDedupe: extractableCandidatesBeforeDedupe.length,
       duplicateCandidatesSkipped,
+      previouslyRecommendedCandidatesDemoted: countPreviouslyRecommendedCandidates(extractableCandidates, recommendationHistory),
       candidateQuality: summarizeCandidateQuality(extractableCandidates, env.profile)
     });
-    const events = await extractAndScore(
-      runId,
-      extractableCandidates,
-      env,
-      { now }
-    );
+    const extraction = await extractAndScoreWithStats(runId, extractableCandidates, env, { now });
+    const events = extraction.events;
     logger.info("extraction and scoring finished", {
       runId,
       durationMs: Date.now() - extractionStart,
-      eventsExtracted: events.length
+      eventsExtracted: events.length,
+      extractionStats: extraction.stats
     });
     setScoutMetadata({
       stage: "extraction_finished",
@@ -245,7 +260,8 @@ export async function runDailyScout(options: RunDailyScoutOptions = { runType: "
         candidatesBeforeUrlDedupe: extractableCandidatesBeforeDedupe.length,
         candidatesAfterUrlDedupe: extractableCandidates.length,
         duplicateCandidatesSkipped,
-        eventsExtracted: events.length
+        eventsExtracted: events.length,
+        ...extraction.stats
       }
     });
 
@@ -272,7 +288,6 @@ export async function runDailyScout(options: RunDailyScoutOptions = { runType: "
     await store.saveEventScores(runId, scores);
     logger.info("score save finished", { runId, durationMs: Date.now() - scoreSaveStart, scoresSaved: scores.length });
 
-    const recommendationHistory = await loadRecommendationHistory(store);
     const recommendationNovelty = filterPreviouslyRecommendedEvents(events, recommendationHistory);
     if (recommendationNovelty.skipped.length > 0) {
       logger.info("previously recommended events suppressed", {
@@ -283,7 +298,7 @@ export async function runDailyScout(options: RunDailyScoutOptions = { runType: "
     }
 
     const recommendations = buildRecommendations(runId, recommendationNovelty.eligible, env, now);
-    const digestEvents = eventsForRecommendations(recommendationNovelty.eligible, recommendations);
+    const digestEvents = eventsForDigest(recommendationNovelty.eligible, recommendations, env);
     const recommendationSaveStart = Date.now();
     logger.info("recommendation save started", { runId, recommendationsCreated: recommendations.length });
     await store.saveRecommendations(runId, recommendations);
@@ -352,7 +367,8 @@ export async function runDailyScout(options: RunDailyScoutOptions = { runType: "
       scanMode,
       xEnabled,
       xPostsRead: discovery.stats.xPostsRead,
-      xBudgetRemaining: discovery.stats.xBudgetRemaining
+      xBudgetRemaining: discovery.stats.xBudgetRemaining,
+      ...runStatsFromExtraction(extraction.stats)
     });
     failureStats = stats;
     const qualitySummary = buildPipelineQualitySummary({
@@ -531,16 +547,46 @@ export async function extractAndScore(
   env: AppEnv = loadRuntimeEnv(),
   options: { now?: Date } = {}
 ): Promise<EventCandidate[]> {
-  const events = await processCandidates(candidates, env, options);
-  return events.map((event) => ({
-    ...event,
-    runId,
-    id: event.id || createId("event"),
-    organizers: event.organizers ?? event.hosts,
-    platforms: event.platforms ?? event.sourcePlatforms ?? ["mock"],
-    confidence: event.confidence ?? Math.min(1, Math.max(0, (event.score ?? 0) / 100)),
-    registrationStatus: event.registrationStatus ?? event.status
-  }));
+  return (await extractAndScoreWithStats(runId, candidates, env, options)).events;
+}
+
+export async function extractAndScoreWithStats(
+  runId: string,
+  candidates: RawCandidate[],
+  env: AppEnv = loadRuntimeEnv(),
+  options: { now?: Date } = {}
+): Promise<{ events: EventCandidate[]; stats: ProcessCandidatesStats }> {
+  const result = await processCandidatesWithStats(candidates, env, options);
+  return {
+    events: result.events.map((event) => ({
+      ...event,
+      runId,
+      id: event.id || createId("event"),
+      organizers: event.organizers ?? event.hosts,
+      platforms: event.platforms ?? event.sourcePlatforms ?? ["mock"],
+      confidence: event.confidence ?? Math.min(1, Math.max(0, (event.score ?? 0) / 100)),
+      registrationStatus: event.registrationStatus ?? event.status
+    })),
+    stats: result.stats
+  };
+}
+
+function runStatsFromExtraction(stats: ProcessCandidatesStats): Partial<RunStats> {
+  return {
+    extractionCandidatesAttempted: stats.candidatesAttempted,
+    extractionCandidatesLimit: stats.candidatesLimited,
+    extractionConcurrency: stats.extractConcurrency,
+    extractionStoppedByTimeBudget: stats.extractionStoppedByTimeBudget,
+    firecrawlPagesUsed: stats.firecrawlPagesUsed,
+    rawEventsExtracted: stats.rawEventsExtracted,
+    dedupedEventsExtracted: stats.dedupedEventsExtracted,
+    futureWindowEvents: stats.futureWindowEvents,
+    dateWindowRejected: stats.dateWindowRejected,
+    scoringEventsAttempted: stats.scoringEventsAttempted,
+    scoringEventsLimit: stats.scoringEventsLimited,
+    scoringConcurrency: stats.scoreConcurrency,
+    scoringStoppedByTimeBudget: stats.scoringStoppedByTimeBudget
+  };
 }
 
 export async function sendDigest(
@@ -594,11 +640,18 @@ function buildRecommendations(runId: string, events: EventCandidate[], env: AppE
     }));
 }
 
-function eventsForRecommendations(events: EventCandidate[], recommendations: Recommendation[]): EventCandidate[] {
-  const rankByEventId = new Map(recommendations.map((recommendation, index) => [recommendation.eventId, index]));
-  return events
-    .filter((event) => rankByEventId.has(event.id))
-    .sort((left, right) => rankByEventId.get(left.id)! - rankByEventId.get(right.id)!);
+/**
+ * The digest shows this run's saved recommendations and, under "Possible", the new events in the
+ * review band. Recommending more than was saved (past MAX_RECOMMENDATIONS_PER_RUN) would show
+ * events that are not recorded as sent, so they would come back in the next digest.
+ */
+export function eventsForDigest(events: EventCandidate[], recommendations: Recommendation[], env: AppEnv): EventCandidate[] {
+  const recommendedIds = new Set(recommendations.map((recommendation) => recommendation.eventId));
+  const { recommend, review } = env.profile.thresholds;
+  return events.filter((event) => {
+    const score = event.score ?? 0;
+    return recommendedIds.has(event.id) || (score >= review && score < recommend);
+  });
 }
 
 export interface RecommendationHistory {
@@ -687,7 +740,11 @@ function buildEventSourceLinks(events: EventCandidate[], candidates: CandidateUr
   return [...links.values()];
 }
 
-export function rankCandidatesForExtraction(candidates: RawCandidate[], profile: ScoutProfile): RawCandidate[] {
+export function rankCandidatesForExtraction(
+  candidates: RawCandidate[],
+  profile: ScoutProfile,
+  history?: RecommendationHistory
+): RawCandidate[] {
   const uniqueCandidates = dedupeCandidatesForExtraction(candidates);
   const priority = (candidate: RawCandidate): number => candidateExtractionPriorityScore(candidate, profile);
   const groups = new Map<string, RawCandidate[]>();
@@ -704,7 +761,66 @@ export function rankCandidatesForExtraction(candidates: RawCandidate[], profile:
       if (candidate) ranked.push(candidate);
     }
   }
-  return ranked;
+  return history ? prioritizeFreshCandidates(ranked, history) : ranked;
+}
+
+/** Keeps the ranking, but moves candidates that match an earlier recommendation to the end. */
+function prioritizeFreshCandidates(candidates: RawCandidate[], history: RecommendationHistory): RawCandidate[] {
+  const recommendedEvents = previouslyRecommendedEvents(history);
+  if (recommendedEvents.length === 0) return candidates;
+  const fresh: RawCandidate[] = [];
+  const seenBefore: RawCandidate[] = [];
+  for (const candidate of candidates) {
+    (candidateMatchesRecommendedEvent(candidate, recommendedEvents) ? seenBefore : fresh).push(candidate);
+  }
+  return [...fresh, ...seenBefore];
+}
+
+function countPreviouslyRecommendedCandidates(candidates: RawCandidate[], history: RecommendationHistory): number {
+  const recommendedEvents = previouslyRecommendedEvents(history);
+  if (recommendedEvents.length === 0) return 0;
+  return candidates.filter((candidate) => candidateMatchesRecommendedEvent(candidate, recommendedEvents)).length;
+}
+
+function previouslyRecommendedEvents(history: RecommendationHistory): EventCandidate[] {
+  if (history.recommendations.length === 0) return [];
+  const recommendedIds = new Set(history.recommendations.map((recommendation) => recommendation.eventId));
+  return history.events.filter((event) => recommendedIds.has(event.id));
+}
+
+/** Same page URL, or (for specific enough titles) the same title in the candidate's title or snippet. */
+function candidateMatchesRecommendedEvent(candidate: RawCandidate, recommendedEvents: EventCandidate[]): boolean {
+  const candidateUrls = [candidate.canonicalUrl, candidate.url, candidate.sourceUrl]
+    .filter((value): value is string => Boolean(value))
+    .map(canonicalizeUrl);
+  const candidateTitle = normalizeForHistoryMatch(candidate.title);
+  const candidateSnippet = normalizeForHistoryMatch(candidate.snippet);
+  const titleCanMatch = candidateTitle.length >= 12 && !isGenericCandidateTitle(candidate.title);
+
+  return recommendedEvents.some((event) => {
+    const eventUrls = [event.canonicalUrl, ...event.sourceUrls]
+      .filter((value): value is string => Boolean(value))
+      .map(canonicalizeUrl);
+    if (candidateUrls.some((url) => eventUrls.includes(url))) return true;
+    const eventTitle = normalizeForHistoryMatch(event.title);
+    if (eventTitle.length < 12) return false;
+    if (titleCanMatch && candidateTitle === eventTitle) return true;
+    return candidateSnippet.includes(eventTitle);
+  });
+}
+
+function normalizeForHistoryMatch(value: string | undefined): string {
+  return (value ?? "")
+    .toLowerCase()
+    .replace(/&amp;/g, "and")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+/** Placeholder titles that public-source discovery gives links it could not name. */
+function isGenericCandidateTitle(title: string | undefined): boolean {
+  return /^(public source link from|public source retained|public source fetch failed|luma public surface)/i.test(title ?? "");
 }
 
 function dedupeCandidatesForExtraction(candidates: RawCandidate[]): RawCandidate[] {

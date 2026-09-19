@@ -101,7 +101,8 @@ Other providers ([all options](llm-providers.md)):
 - **Gemini, free tier:** [aistudio.google.com](https://aistudio.google.com/app/apikey) → **Create
   API key** (starts with `AIza`) → `LLM_PROVIDER=gemini`. Check your rate limits at
   [aistudio.google.com/rate-limit](https://aistudio.google.com/rate-limit); a scan makes about
-  25–65 calls in a few minutes.
+  25–65 calls in a few minutes, 4 at a time. If scans stop with a rate-limit error, set
+  `MAX_LLM_EXTRACT_CONCURRENCY=1` and `MAX_LLM_SCORE_CONCURRENCY=1`.
 - **Anthropic:** [console.anthropic.com](https://console.anthropic.com) → **Settings → API Keys →
   Create Key** (starts with `sk-ant-`) → `LLM_PROVIDER=anthropic`. Add credit under **Billing**.
 - **Qwen (Alibaba Cloud Model Studio):** follow Alibaba's

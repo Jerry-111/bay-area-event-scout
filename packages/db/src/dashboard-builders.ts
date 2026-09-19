@@ -36,7 +36,10 @@ export function buildDashboard(input: {
   missedEvents: DashboardMissedEvent[];
   dataGaps: string[];
 }): AdminDashboard {
-  const latestRun = input.runs[0];
+  const latestRun = dashboardDisplayRun(input.runs);
+  const newestRun = input.runs[0];
+  const activeRun =
+    newestRun && newestRun.status === "running" && newestRun.id !== latestRun?.id && !isRunStuck(newestRun) ? newestRun : undefined;
   const eventById = new Map(input.events.map((event) => [event.id, event]));
   const scoreByEventId = latestScoresByEvent(input.scores);
   const latestCandidates = latestRun
@@ -72,6 +75,8 @@ export function buildDashboard(input: {
     today: {
       latestRunId: latestRun?.id,
       latestRunStatus: latestRun?.status,
+      activeRunId: activeRun?.id,
+      activeRunStartedAt: activeRun?.startedAt,
       nextScheduledScan: nextConfiguredScan(input.env.scanSchedules),
       scanMode: latestRun?.stats.scanMode ?? "light",
       xPostsUsedToday: xPostsUsedToday(input.runs),
@@ -435,6 +440,16 @@ export function buildTasteSignalsFromSummaries(feedbackSummary: DashboardFeedbac
 
 function eventFingerprint(event: EventCandidate): string {
   return `${event.canonicalUrl.toLowerCase()}|${event.title.trim().toLowerCase()}`;
+}
+
+/**
+ * The run whose results Today shows: the newest one, unless it is still running, in which case the
+ * newest one that finished (or failed), so a scan in progress never empties the page.
+ */
+export function dashboardDisplayRun(runs: ScoutRun[]): ScoutRun | undefined {
+  const newest = runs[0];
+  if (newest?.status === "running") return runs.find((run) => run.status !== "running") ?? newest;
+  return newest;
 }
 
 export function latestScoresByEvent(scores: EventScore[]): Map<string, EventScore> {

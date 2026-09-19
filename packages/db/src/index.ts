@@ -24,6 +24,7 @@ import {
   buildSuppressedEvents,
   buildTasteSignals,
   buildTasteSignalsFromSummaries,
+  dashboardDisplayRun,
   scoringModelLabel
 } from "./dashboard-builders.js";
 import {
@@ -55,6 +56,7 @@ import type {
 
 export * from "./types.js";
 export { DEFAULT_RETENTION_RUNS, resolveScoutDataDir, SCOUT_DATA_DIR_NAME, SCOUT_STORE_FILE_NAME } from "./file-store.js";
+export { dashboardDisplayRun } from "./dashboard-builders.js";
 
 export const migrationFiles = ["001_initial_schema.sql"];
 
@@ -269,7 +271,8 @@ class MemoryEventStore implements EventStore {
   async getDashboard(): Promise<AdminDashboard> {
     await this.reload();
     const runs = await this.listRuns(20);
-    const latestRunId = runs[0]?.id;
+    // A scan still running would show a half-finished page; show the last finished one instead.
+    const latestRunId = dashboardDisplayRun(runs)?.id;
     const topRecommendations = await this.listRecommendations({ limit: 25 });
     const latestRecommendations = latestRunId
       ? await this.listRecommendations({ runId: latestRunId, limit: 25 })
@@ -637,7 +640,8 @@ class PgEventStore implements EventStore {
 
   async getDashboard(): Promise<AdminDashboard> {
     const runs = await this.listRuns(20);
-    const latestRunId = runs[0]?.id;
+    // A scan still running would show a half-finished page; show the last finished one instead.
+    const latestRunId = dashboardDisplayRun(runs)?.id;
     const dataGaps: string[] = [];
     const [
       topRecommendations,

@@ -312,6 +312,7 @@ class ScanProgress {
         this.setLive(`Reading event pages: 0/${this.extractTotal}`);
         break;
       case "candidate extraction finished":
+      case "candidate extraction failed":
         this.extracted += 1;
         this.setLive(`Reading event pages: ${this.extracted}/${this.extractTotal || "?"}`);
         break;
@@ -323,6 +324,7 @@ class ScanProgress {
         this.setLive(`Scoring events: 0/${this.scoreTotal}`);
         break;
       case "event scoring finished":
+      case "event scoring failed":
         this.scored += 1;
         this.setLive(`Scoring events: ${this.scored}/${this.scoreTotal || "?"}`);
         break;

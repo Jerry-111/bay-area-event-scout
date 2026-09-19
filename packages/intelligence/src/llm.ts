@@ -13,7 +13,7 @@ import {
   type ScoutProfile
 } from "@event-scout/shared";
 import type { z } from "zod";
-import { callLlm } from "./llm-client.js";
+import { callLlm, LlmServiceError } from "./llm-client.js";
 import {
   eventExtractionSchema,
   eventScoreSchema,
@@ -239,19 +239,27 @@ async function parseWithModelFallbacks<T>(input: {
   schemaName: string;
 }): Promise<T> {
   const errors: string[] = [];
+  const serviceErrors: LlmServiceError[] = [];
 
   for (const model of input.models) {
     try {
       const raw = await callLlm({ env: input.env, model, prompt: input.prompt });
       return await parseJsonWithRepair(raw, input.schema, input.schemaName, input.env);
     } catch (error) {
+      if (error instanceof LlmServiceError) serviceErrors.push(error);
       const message = error instanceof Error ? error.message : String(error);
       errors.push(`${model}: ${message}`);
       console.warn(`[llm] ${input.schemaName} failed with ${model}: ${message}`);
     }
   }
 
-  throw new Error(`${input.schemaName} failed across models: ${errors.join(" | ")}`);
+  const message = `${input.schemaName} failed across models: ${errors.join(" | ")}`;
+  // When every model the provider was asked for refused (rather than one page producing bad
+  // JSON), keep the status so the pipeline can stop instead of failing page after page.
+  if (serviceErrors.length === errors.length && serviceErrors.length > 0) {
+    throw new LlmServiceError(message, serviceErrors[serviceErrors.length - 1]!.status);
+  }
+  throw new Error(message);
 }
 
 function orderedModels(...models: string[]): string[] {

@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { DEFAULT_PROFILE, type EventCandidate, type RawCandidate, type Recommendation } from "@event-scout/shared";
-import { buildScores, filterPreviouslyRecommendedEvents, rankCandidatesForExtraction } from "./run-scout.js";
+import { buildScores, eventsForDigest, filterPreviouslyRecommendedEvents, rankCandidatesForExtraction } from "./run-scout.js";
+import { loadEnv } from "@event-scout/shared";
 
 test("filterPreviouslyRecommendedEvents suppresses events already recommended by URL", () => {
   const current = eventFixture({
@@ -110,6 +111,51 @@ test("buildScores keeps the scorer's component breakdown and applies the profile
   assert.equal(scored?.shouldRecommend, false);
   assert.equal(legacy?.userFit, 21);
   assert.equal(legacy?.nextAction, "monitor");
+});
+
+test("rankCandidatesForExtraction moves candidates that were recommended before to the end", () => {
+  const historical = eventFixture({
+    id: "event-old-id",
+    canonicalUrl: "https://lu.ma/already-recommended",
+    sourceUrls: ["https://lu.ma/already-recommended"],
+    title: "Already Recommended Founder Dinner"
+  });
+  const ranked = rankCandidatesForExtraction(
+    [
+      rawCandidateFixture({
+        id: "old",
+        sourceUrl: "https://lu.ma/already-recommended",
+        url: "https://lu.ma/already-recommended",
+        canonicalUrl: "https://lu.ma/already-recommended",
+        title: "Already Recommended Founder Dinner",
+        snippet: "San Francisco founder dinner on September 12, 2026.",
+        sourceScore: 100
+      }),
+      rawCandidateFixture({
+        id: "fresh",
+        sourceUrl: "https://lu.ma/fresh-founder-dinner",
+        url: "https://lu.ma/fresh-founder-dinner",
+        canonicalUrl: "https://lu.ma/fresh-founder-dinner",
+        title: "Fresh Founder Dinner",
+        snippet: "San Francisco founder dinner on September 13, 2026.",
+        sourceScore: 82
+      })
+    ],
+    DEFAULT_PROFILE,
+    { events: [historical], recommendations: [recommendationFixture({ eventId: historical.id })] }
+  );
+
+  assert.deepEqual(ranked.map((candidate) => candidate.id), ["fresh", "old"]);
+});
+
+test("the digest gets the saved recommendations plus the review band, not unsaved high scores", () => {
+  const env = loadEnv({ MOCK_MODE: "true" });
+  const saved = eventFixture({ id: "saved", score: 92 });
+  const overCap = eventFixture({ id: "over-cap", score: 85 });
+  const possible = eventFixture({ id: "possible", score: 70 });
+  const low = eventFixture({ id: "low", score: 40 });
+  const digest = eventsForDigest([saved, overCap, possible, low], [recommendationFixture({ eventId: "saved" })], env);
+  assert.deepEqual(digest.map((event) => event.id), ["saved", "possible"]);
 });
 
 function eventFixture(overrides: Partial<EventCandidate> = {}): EventCandidate {
