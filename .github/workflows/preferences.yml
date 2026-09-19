@@ -1,0 +1,115 @@
+# Shows or changes your preferences (scout.profile.yaml) in plain language, from the Actions tab:
+# Actions -> Preferences -> Run workflow. Changes are made by your LLM, checked against the profile
+# rules, listed on the run's summary page, and committed to your copy. See docs/github-actions.md.
+name: Preferences
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "What to do"
+        type: choice
+        options:
+          - show my preferences
+          - change them
+          - start over from a description
+          - undo the last change
+        default: show my preferences
+      text:
+        description: 'For "change them": what to change, e.g. "add climate tech, no crypto". For "start over": describe yourself. Any language.'
+        type: string
+        required: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: preferences
+  cancel-in-progress: false
+
+jobs:
+  preferences:
+    name: Preferences
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      ACTION: ${{ inputs.action }}
+      TEXT: ${{ inputs.text }}
+      PRESET: ${{ vars.SCOUT_PROFILE }}
+      LLM_PROVIDER: ${{ vars.LLM_PROVIDER || secrets.LLM_PROVIDER }}
+      LLM_MODEL: ${{ vars.LLM_MODEL }}
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+      LOG_FORMAT: pretty
+    steps:
+      - name: Check out your copy
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # "undo" looks back through the history of scout.profile.yaml
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # A preset chosen with the SCOUT_PROFILE variable becomes your own scout.profile.yaml the
+      # first time you change it; from then on that file is what the Scout workflow uses.
+      - name: Start from your preset
+        if: inputs.action == 'change them' && env.PRESET != '' && hashFiles('scout.profile.yaml') == ''
+        run: |
+          if [[ "$PRESET" =~ ^[a-z0-9-]+$ ]] && [ -f "profiles/$PRESET.yaml" ]; then
+            cp "profiles/$PRESET.yaml" scout.profile.yaml
+          else
+            echo "::warning::SCOUT_PROFILE=$PRESET is not a preset in profiles/; starting from the default preferences."
+          fi
+
+      - name: ${{ inputs.action }}
+        env:
+          SCOUT_PROFILE: ${{ inputs.action == 'show my preferences' && hashFiles('scout.profile.yaml') == '' && vars.SCOUT_PROFILE || '' }}
+        run: |
+          set -o pipefail
+          case "$ACTION" in
+            "undo the last change")
+              last="$(git log -n 1 --format=%H -- scout.profile.yaml)"
+              if [ -z "$last" ]; then
+                echo "There is no saved change to undo." | tee -a "$GITHUB_STEP_SUMMARY"
+              elif git cat-file -e "$last^:scout.profile.yaml" 2>/dev/null; then
+                git show "$last^:scout.profile.yaml" > scout.profile.yaml
+                echo "Restored your preferences from before the last change. Run this again to redo it." | tee -a "$GITHUB_STEP_SUMMARY"
+              else
+                git rm -q scout.profile.yaml
+                echo "Removed scout.profile.yaml: back to the preset or default preferences. Run this again to redo it." | tee -a "$GITHUB_STEP_SUMMARY"
+              fi
+              exit 0
+              ;;
+            "show my preferences") command=(pnpm --silent profile:show) ;;
+            "change them") command=(pnpm --silent profile:edit --yes "$TEXT") ;;
+            "start over from a description") command=(pnpm --silent profile:new --yes "$TEXT") ;;
+          esac
+          if [ "$ACTION" != "show my preferences" ] && [ -z "$TEXT" ]; then
+            echo "::error::Fill in the text box: what to change, or a description of yourself."
+            exit 1
+          fi
+          # Close the code block even when the command fails, then fail the step with its exit code.
+          { echo '```text'; status=0; "${command[@]}" 2>&1 || status=$?; echo '```'; exit "$status"; } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Save to your copy
+        if: inputs.action != 'show my preferences'
+        run: |
+          # An edit or a restore changes the file; an undo back to a preset already staged its removal.
+          if [ -f scout.profile.yaml ]; then git add -- scout.profile.yaml; fi
+          if git diff --cached --quiet; then
+            echo "Nothing to save."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -q -m "Preferences: ${ACTION}${TEXT:+ (${TEXT:0:60})}"
+          git push -q
+          echo "Saved. The next scan uses these preferences." | tee -a "$GITHUB_STEP_SUMMARY"

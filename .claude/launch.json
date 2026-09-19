@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "admin",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@event-scout/admin", "start"],
+      "port": 4310,
+      "autoPort": true
+    },
+    {
+      "name": "admin-mock",
+      "runtimeExecutable": "env",
+      "runtimeArgs": ["MOCK_MODE=true", "DATABASE_URL=", "ADMIN_PASSWORD=", "pnpm", "--filter", "@event-scout/admin", "start"],
+      "port": 4311,
+      "autoPort": true
+    }
+  ]
+}

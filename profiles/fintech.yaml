@@ -1,0 +1,65 @@
+# Preset: a fintech founder or operator in the SF Bay Area.
+# Same format as consumer-ai-founder.yaml (see that file for how each field works).
+# Use it with SCOUT_PROFILE=fintech, or copy it to scout.profile.yaml and edit.
+
+name: fintech
+
+persona: >-
+  a fintech founder working on payments, lending, banking infrastructure, or wealth
+  products who wants small rooms with other fintech founders and operators, bank and
+  partner-side people, and fintech investors
+
+region:
+  name: SF Bay Area
+  cities: [San Francisco, Palo Alto, Menlo Park, Mountain View, Oakland]
+  aliases: [SF, Bay Area, San Jose, Stanford, SoMa, FiDi]
+
+topics:
+  - name: Fintech
+    weight: 8
+    keywords: [fintech, payment, banking, lending, credit, embedded finance, neobank, wealth management, insurtech, regtech]
+  - name: Financial infrastructure
+    weight: 6
+    keywords: [card issuing, open banking, treasury, compliance, kyc, fraud, stablecoin payment, bank partnership, money movement]
+  - name: AI for financial services
+    weight: 0
+    keywords: [financial ai, ai for finance, ai in fintech, ai for banking, finance agent]
+  - name: Crypto speculation
+    weight: -10
+    keywords: [memecoin, nft, token launch, airdrop, trading signal]
+
+audience: [founder, operator, investor, banker, compliance leader, product leader]
+
+formats:
+  prefer: [dinner, breakfast, roundtable, salon, happy hour]
+  avoid: [expo, conference, online, class, course]
+
+hubs:
+  - This Week in Fintech
+  - Brex Startup Community
+  - Rho
+  - Mercury
+  - Plaid
+  - Stripe
+  - Ramp
+  - a16z
+  - 90 Gold
+  - Founders Cafe
+
+exclude:
+  formats: [hackathon, buildathon, hack night, webinar, virtual only, job fair]
+  topics: [memecoin, nft mint]
+  eligibility: [accredited investors only, series b founders only]
+
+search:
+  phrases: [fintech founders, payments founders, fintech operators, embedded finance, banking infrastructure]
+  rooms: [founder dinner, fintech happy hour, operator roundtable, founder breakfast, investor mixer]
+
+notes:
+  - Events about payments, lending, banking infrastructure, compliance, or fraud are core fits even when they are not labeled "fintech".
+  - General AI or startup events are only worth recommending when the room clearly includes fintech founders, operators, or investors.
+  - Crypto events are relevant only when they are about payments or financial infrastructure, not trading or token speculation.
+
+thresholds:
+  recommend: 80
+  review: 65

@@ -1,0 +1,64 @@
+# Preset: someone building, funding, or partnering with climate tech companies in the SF Bay Area.
+# Same format as consumer-ai-founder.yaml (see that file for how each field works).
+# Use it with SCOUT_PROFILE=climate-tech, or copy it to scout.profile.yaml and edit.
+
+name: climate-tech
+
+persona: >-
+  a climate tech founder or operator (energy, carbon, sustainability, or climate software)
+  who wants small rooms with other climate founders, climate investors, and the corporate,
+  utility, and policy people who buy from or partner with climate startups
+
+region:
+  name: SF Bay Area
+  cities: [San Francisco, Oakland, Berkeley, Palo Alto, Menlo Park, Mountain View]
+  aliases: [SF, Bay Area, East Bay, Emeryville, San Jose, Stanford, SoMa]
+
+topics:
+  - name: Climate tech
+    weight: 8
+    keywords: [climate tech, climate, clean energy, cleantech, decarbonization, carbon removal, carbon capture, renewable energy, solar, energy storage, battery, grid, electrification, geothermal, hydrogen, nuclear energy]
+  - name: Sustainability and circular economy
+    weight: 4
+    keywords: [sustainability, circular economy, net zero, emissions, carbon accounting, recycling, sustainable materials, food system, agtech, water tech]
+  - name: Climate finance and policy
+    weight: 0
+    keywords: [climate finance, carbon market, carbon credit, climate policy, project finance, green bond, inflation reduction act]
+  - name: Crypto speculation
+    weight: -10
+    keywords: [memecoin, nft, token launch, airdrop, trading signal]
+
+audience: [founder, operator, investor, engineer, scientist, utility, corporate sustainability, policy]
+
+formats:
+  prefer: [dinner, breakfast, roundtable, salon, site visit, happy hour]
+  avoid: [expo, trade show, conference, online, class, course]
+
+hubs:
+  - SF Climate Week
+  - Powerhouse
+  - Work on Climate
+  - Climatebase
+  - Activate
+  - Elemental Impact
+  - Breakthrough Energy
+  - Congruent Ventures
+  - Lowercarbon Capital
+
+exclude:
+  formats: [hackathon, buildathon, hack night, webinar, virtual only, job fair]
+  topics: [memecoin, nft mint]
+  eligibility: [accredited investors only, series b founders only, series c+]
+
+search:
+  phrases: [climate tech founders, climate founders, clean energy founders, climate investors, decarbonization startups]
+  rooms: [founder dinner, climate founders dinner, investor roundtable, operator roundtable, founder breakfast]
+
+notes:
+  - Energy, grid, carbon, materials, and sustainability-software events are core fits even when they are not labeled "climate".
+  - Rooms with climate investors, corporate sustainability buyers, or utility and policy people are valuable when they are not sales pitches.
+  - Large expos and brand-marketing "sustainability" events are low value even when the topic matches; small SF Climate Week side events can be strong.
+
+thresholds:
+  recommend: 80
+  review: 65

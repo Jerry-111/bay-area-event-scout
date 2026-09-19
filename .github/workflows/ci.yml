@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Typecheck, test, and mock smoke run
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm (version from package.json "packageManager")
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck and run unit tests
+        run: pnpm test
+
+      - name: Mock scout smoke run
+        run: pnpm scout:mock
+        env:
+          MOCK_MODE: "true"
+
+      - name: Onboarding and doctor smoke run
+        run: |
+          pnpm scout:doctor
+          pnpm config:check > /dev/null
+          tmp="$(mktemp -d)"
+          cp .env.example "$tmp/"
+          cp -r profiles "$tmp/"
+          pnpm onboard --yes --provider none --profile fintech --root "$tmp"
+          grep -q '^SCOUT_PROFILE=fintech' "$tmp/.env.local"

@@ -1,0 +1,2 @@
+# Force contributors to pick a template instead of filing a blank issue.
+blank_issues_enabled: false

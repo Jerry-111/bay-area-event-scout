@@ -1,0 +1,25 @@
+{
+  "name": "@event-scout/intelligence",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "pnpm -w exec tsc -b packages/intelligence",
+    "typecheck": "pnpm -w exec tsc -b packages/intelligence",
+    "test": "pnpm -w exec tsc -b packages/intelligence && node --test dist/*.test.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.126.0",
+    "@event-scout/shared": "workspace:*",
+    "yaml": "^2.9.1",
+    "zod": "^4.4.3"
+  }
+}

@@ -1,0 +1,98 @@
+# Runs the scout on a schedule in your own copy of this repository, with no server and no local
+# install. Setup (about 10 minutes, all in the browser): docs/github-actions.md.
+name: Scout
+
+on:
+  schedule:
+    # Once a day at 16:17 UTC: 9:17 in San Francisco in summer, 8:17 in winter. Add more lines to
+    # scan more often (each scan costs money; see docs/setup-and-costs.md).
+    - cron: "17 16 * * *"
+  workflow_dispatch:
+    inputs:
+      sample_data:
+        description: "Use sample data instead of your API keys (a free test of the setup)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: scout
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    name: Find and score events
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      SCOUT_BUDGET: ${{ vars.SCOUT_BUDGET || 'small' }}
+      LLM_PROVIDER: ${{ vars.LLM_PROVIDER || secrets.LLM_PROVIDER }}
+      LLM_MODEL: ${{ vars.LLM_MODEL }}
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+      EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
+      X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
+      FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ vars.TELEGRAM_CHAT_ID || secrets.TELEGRAM_CHAT_ID }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      LOG_FORMAT: pretty
+    steps:
+      - name: Check the setup
+        id: setup
+        env:
+          SAMPLE_DATA: ${{ inputs.sample_data && 'true' || 'false' }}
+        run: |
+          if [ "$SAMPLE_DATA" = "true" ]; then
+            echo "Sample-data run: no API keys are used."
+            echo "mode=sample" >> "$GITHUB_OUTPUT"
+          elif [ -z "$LLM_PROVIDER" ] || [ -z "$LLM_API_KEY" ]; then
+            echo "::notice title=Scout is not set up yet::Add the LLM_PROVIDER variable and the LLM_API_KEY secret (docs/github-actions.md). Skipping this scan."
+            echo "mode=skip" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=real" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check out your copy
+        if: steps.setup.outputs.mode != 'skip'
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        if: steps.setup.outputs.mode != 'skip'
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        if: steps.setup.outputs.mode != 'skip'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        if: steps.setup.outputs.mode != 'skip'
+        run: pnpm install --frozen-lockfile
+
+      # Past results live in the Actions cache between runs, so events are not recommended twice.
+      - name: Restore past results
+        if: steps.setup.outputs.mode == 'real'
+        uses: actions/cache/restore@v4
+        with:
+          path: .scout-data
+          key: scout-data-${{ github.run_id }}
+          restore-keys: scout-data-
+
+      - name: Scan
+        if: steps.setup.outputs.mode != 'skip'
+        env:
+          # A preset picked with the SCOUT_PROFILE variable applies until you save your own
+          # preferences (scout.profile.yaml, e.g. with the Preferences workflow).
+          SCOUT_PROFILE: ${{ hashFiles('scout.profile.yaml') == '' && vars.SCOUT_PROFILE || '' }}
+        run: pnpm ${{ steps.setup.outputs.mode == 'sample' && 'scout:mock' || 'scout:real' }}
+
+      - name: Save results for the next run
+        if: always() && steps.setup.outputs.mode == 'real'
+        uses: actions/cache/save@v4
+        with:
+          path: .scout-data
+          key: scout-data-${{ github.run_id }}-${{ github.run_attempt }}

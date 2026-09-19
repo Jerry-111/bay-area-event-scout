@@ -1,0 +1,128 @@
+# Event Scout profile: who you are, where you are, and which events are worth your time.
+#
+# The profile drives the whole pipeline: the search queries, which candidates are dropped
+# before any LLM spend, the LLM scoring prompt, the automatic score adjustments, and the
+# recommendation thresholds.
+#
+# How to use your own:
+#   cp profiles/consumer-ai-founder.yaml scout.profile.yaml   # then edit it
+# or pick a preset in .env.local:
+#   SCOUT_PROFILE=b2b-saas-founder
+#
+# Keyword rules (topics, formats, audience, hubs, exclude): matching is case-insensitive,
+# ignores punctuation, and works on whole words. A singular keyword also matches its
+# plural ("founder" matches "founders"), so write keywords in singular form.
+
+name: consumer-ai-founder
+
+# Who the scout works for, in the third person. This goes straight into the LLM prompts.
+persona: >-
+  an early-stage (pre-seed) founder building consumer AI products who wants small,
+  high-signal in-person rooms with other founders, builders, operators, and early-stage
+  investors
+
+region:
+  name: SF Bay Area
+  # Cities that count as local and convenient. Used in search queries and scoring.
+  cities: [San Francisco, Palo Alto, Menlo Park, Mountain View, Berkeley, Oakland]
+  # Other words that mark an event as local: abbreviations, neighborhoods, campuses.
+  aliases: [SF, Bay Area, San Jose, Stanford, SoMa, Hayes Valley, Mission]
+
+# What the events are about.
+# weight moves the final score (0-100) when a topic matches:
+#   positive = boost, negative = penalty, 0 = relevant, no automatic adjustment.
+# Every matching topic adds its weight (boosts are capped at +15, penalties at -25).
+topics:
+  - name: Consumer AI / B2C
+    weight: 8
+    keywords: [b2c, consumer, consumer ai, consumer-facing, prosumer, creator, social app, social product, marketplace, mobile app, personal ai]
+  - name: AI agents
+    weight: 0
+    keywords: [ai agent, agent builder, agent founder, agentic, agents]
+  - name: Product, growth and go-to-market
+    weight: 0
+    keywords: [product, go-to-market, gtm, growth, design partner]
+  - name: B2B / enterprise SaaS
+    weight: -10
+    keywords: [b2b, enterprise, saas, procurement, cio, ciso, cxo, enterprise buyer]
+  - name: Sales and revenue operations
+    weight: -10
+    keywords: [sales, revops, revenue operations, revenue leader, demand gen, lead gen, pipeline, sales leader, marketing leader, customer acquisition]
+
+# People you want in the room.
+audience: [founder, builder, operator, investor, angel investor, product leader]
+
+formats:
+  # Small-room formats you like; they count as a curated-room signal.
+  prefer: [dinner, breakfast, salon, roundtable, founder house]
+  # Formats that are usually low value: penalized, and they halve topic boosts.
+  avoid: [conference, expo, online, class, course, training]
+
+# Venues and communities whose events usually have a strong room.
+hubs:
+  - SHACK15
+  - SHACK 15
+  - StartupHQ
+  - Startup HQ
+  - 90 Gold
+  - Founders Cafe
+  - Founders Inc
+  - South Park Commons
+  - Cerebral Valley
+  - Frontier Tower
+  - Entrepreneur First
+  - Entrepreneurs First
+  - Pear VC
+  - SignalFire
+  - a16z
+  - GitHub for Startups
+  - Malaika Commons
+  - Founders Common
+  - Founders You Should Know
+  - Brex Startup Community
+  - AI Hustle
+  - SF AI Agent Meetup
+  - Sapienne
+  - Founders Brew
+  - Homebrew Club
+  - Founders on Tap
+
+# Hard filters. Candidates that mention these are dropped before any LLM call,
+# and the scorer skips them.
+exclude:
+  formats: [hackathon, buildathon, code sprint, coding sprint, hack night, webinar, online event, virtual only, job fair]
+  topics: [physical ai, robotics, hardware ai, frontier research, research club, paper reading, ml research, research scientist, postdoc]
+  # Rooms you can't get into.
+  eligibility: [phd required, postdoc required, faculty only, researchers only, frontier lab only, series a founders only, series a+, series b+]
+
+# How people phrase the events you want. Combined with your cities and rooms
+# to build web and X search queries.
+search:
+  phrases: [AI founders, agent builders, consumer AI founders, AI product builders, AI builders]
+  rooms: [founder dinner, founder salon, operator roundtable, founder breakfast, builder salon, happy hour]
+
+# Extra guidance for the LLM scorer, passed through word for word.
+notes:
+  - Prefer B2C and consumer-facing AI events over B2B/enterprise events when room quality and actionability are comparable.
+  - "Coding-agent and developer-tool events are only a partial fit: recommend them only when they also have founder, operator, product, customer, or go-to-market networking value."
+  - B2B-heavy events centered on enterprise SaaS sales, RevOps, demand generation, pipeline, CIO/CISO/CXO buyers, or procurement are lower priority unless they are clearly small founder/operator/builder rooms with strong AI agent or consumer AI relevance.
+  - Hub venues and communities lift roomQuality and networkingValue for otherwise relevant in-person founder rooms, but should not override topic, format, location, or eligibility penalties.
+  - "Hackathons, buildathons, code sprints, and hack nights are long time-sink formats with weak networking: skip them unless the page is clearly only a short demo day or networking mixer attached to a hackathon."
+
+thresholds:
+  recommend: 80   # score needed for the digest and the "Act now" list
+  review: 65      # near misses shown under "Worth a look"
+
+# Optional: turn off built-in sources (by id or tag) or add your own.
+# sources:
+#   disable: [luma-ai-tinkerers-sf, research]
+#   add:
+#     - name: My favorite calendar
+#       kind: luma_calendar          # luma_calendar | rss_feed | event_digest | organizer_site | indexed_source | x_account
+#       url: https://luma.com/my-calendar
+#     - name: A newsletter
+#       kind: rss_feed
+#       feed: https://example.substack.com/feed
+#     - name: An organizer on X
+#       kind: x_account
+#       handle: someorganizer

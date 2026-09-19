@@ -1,0 +1,7 @@
+name: event-scout
+channels:
+  - conda-forge
+dependencies:
+  - nodejs
+  - pnpm=11.22.0
+  - python

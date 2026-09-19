@@ -1,0 +1,67 @@
+# Preset: a seed-stage B2B SaaS / enterprise AI founder in the SF Bay Area.
+# Same format as consumer-ai-founder.yaml (see that file for how each field works).
+# Use it with SCOUT_PROFILE=b2b-saas-founder, or copy it to scout.profile.yaml and edit.
+
+name: b2b-saas-founder
+
+persona: >-
+  a seed-stage founder building B2B SaaS and enterprise AI products who wants small rooms
+  with other B2B founders, go-to-market leaders, potential design partners and buyers,
+  and early-stage investors
+
+region:
+  name: SF Bay Area
+  cities: [San Francisco, Palo Alto, Menlo Park, Mountain View, Redwood City, Oakland]
+  aliases: [SF, Bay Area, San Jose, Sunnyvale, Stanford, SoMa, FiDi]
+
+topics:
+  - name: B2B / enterprise SaaS
+    weight: 8
+    keywords: [b2b, enterprise, saas, vertical saas, enterprise ai, procurement, cio, cto, ciso]
+  - name: Go-to-market and sales
+    weight: 6
+    keywords: [go-to-market, gtm, sales, revops, revenue operations, demand gen, pipeline, sales leader, marketing leader, design partner, customer acquisition]
+  - name: AI agents and automation
+    weight: 0
+    keywords: [ai agent, agentic, workflow automation, llm, copilot]
+  - name: Consumer apps
+    weight: -6
+    keywords: [b2c, consumer, consumer ai, consumer app, creator, social app, mobile game, dating app]
+
+audience: [founder, operator, sales leader, revenue leader, investor, buyer, head of sales]
+
+formats:
+  prefer: [dinner, breakfast, roundtable, salon, founder house]
+  avoid: [expo, trade show, online, class, course]
+
+hubs:
+  - SHACK15
+  - StartupHQ
+  - 90 Gold
+  - Founders Cafe
+  - South Park Commons
+  - OpenStages
+  - Pear VC
+  - SignalFire
+  - a16z
+  - GP Dinners
+  - Brex Startup Community
+  - Rho
+
+exclude:
+  formats: [hackathon, buildathon, hack night, webinar, virtual only, job fair]
+  topics: [crypto trading, memecoin, nft mint]
+  eligibility: [series b founders only, series c+, public company executives only]
+
+search:
+  phrases: [B2B SaaS founders, enterprise AI founders, GTM leaders, revenue leaders, B2B founders]
+  rooms: [founder dinner, GTM roundtable, revenue leaders dinner, operator roundtable, founder breakfast]
+
+notes:
+  - Small rooms with enterprise buyers (CIO, CTO, VP-level operators) are valuable when they are not vendor pitch sessions.
+  - Vendor-sponsored lead-gen events and large trade shows are low value even when the topic matches.
+  - Consumer-focused events are lower priority unless the room is full of founders who could be customers or design partners.
+
+thresholds:
+  recommend: 80
+  review: 65

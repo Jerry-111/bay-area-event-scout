@@ -1,0 +1,36 @@
+# Finds the chat id for your Telegram digest: send your bot a message in Telegram, then run
+# Actions -> Telegram chat id -> Run workflow and copy the id from the run's summary page into the
+# TELEGRAM_CHAT_ID variable. See docs/github-actions.md.
+name: Telegram chat id
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  find:
+    name: Find my Telegram chat id
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+    steps:
+      - name: Check out your copy
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Look up chats that messaged your bot
+        run: pnpm --silent telegram:chats

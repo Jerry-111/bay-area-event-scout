@@ -1,0 +1,209 @@
+# Bay Area Event Scout
+
+English | [中文](README.zh-CN.md)
+
+A scout that finds small, high-signal SF Bay Area events for founders, operators, and investors:
+the dinners, salons, and roundtables that rarely make the big event calendars. It searches public
+calendars, newsletters, the web, and X, reads each event page, scores it against **your**
+preferences, and sends a short digest to Telegram, plus a dashboard your team can triage.
+
+- **Wide discovery.** Beyond Luma's public pages, it scans 100+ curated Bay Area calendars, digests,
+  and newsletters. It also uses the official X API to catch events that hosts only share on X. An
+  LLM planner adds fresh search queries every run, so the scout doesn't keep asking the same questions.
+- **Your preferences, in plain words.** Topics you want more or less of, formats, people, venues,
+  hard no's, and the score bar live in one [scout profile](docs/profiles.md). Start from a preset
+  (B2B SaaS, climate tech, fintech, consumer AI), or describe yourself in a sentence. Change it later
+  the same way: `pnpm profile:edit "add climate tech, no crypto"`.
+- **Bring your own LLM.** OpenAI, Anthropic, Gemini, DeepSeek, Qwen/DashScope, OpenRouter, Ollama,
+  or any OpenAI-compatible endpoint. See [LLM providers](docs/llm-providers.md).
+- **Explainable scores.** Every event gets a 0-100 score with a breakdown and a rationale that names
+  which of your preferences moved it. See [scoring](docs/scoring.md).
+- **Cheap to run, and you choose the budget.** From about $2 a month; see
+  [setup and costs](docs/setup-and-costs.md).
+
+## Pick how to use it
+
+| | What you need | Good for |
+| --- | --- | --- |
+| **[Daily digest on GitHub](docs/github-actions.md)** | A GitHub account, an LLM key, and a Telegram bot. Nothing to install. | Most people. About 10 minutes of setup in the browser. |
+| **[On your computer](#on-your-computer)** | Node.js and a terminal | Trying it out, the dashboard, tinkering |
+| **[Hosted for a team](docs/operations.md)** | Trigger.dev, Postgres, and a Node host | A shared dashboard with scheduled scans |
+
+## What it costs
+
+Trying it with sample data is free. For real scans, you pay each provider directly, and a budget
+setting caps what one scan may use:
+
+| `SCOUT_BUDGET` | Per scan | Suggested pace | Per month |
+| --- | ---: | --- | ---: |
+| `small` | ~$0.25 | once a day | ~$2 |
+| `medium` | ~$0.50 | twice a day | ~$20 |
+| `large` | ~$1, plus X | three times a day | ~$80–130 |
+
+Only an LLM key is required. Telegram (free) and Exa are recommended; X and Firecrawl are optional.
+[Setup and costs](docs/setup-and-costs.md) walks through getting each key, step by step, and
+compares LLM prices.
+
+## On your computer
+
+### Try it (2 minutes, no keys)
+
+You need **Node.js 22 or newer** ([download the LTS installer](https://nodejs.org/en/download)) and
+**pnpm**. To get pnpm, run `corepack enable` once (on a Mac, if it says permission denied, run
+`sudo corepack enable`), or `npm install -g pnpm`. Then get the code: with git, clone it; without
+git, use **Code → Download ZIP** on GitHub and unzip it.
+
+```sh
+git clone https://github.com/Jerry-111/bay-area-event-scout.git
+cd bay-area-event-scout
+pnpm install        # installs and builds everything
+pnpm scout:mock     # the full pipeline on sample data
+pnpm admin          # dashboard at http://127.0.0.1:4310
+```
+
+### Set it up for real (about 5 minutes)
+
+```sh
+pnpm onboard        # guided setup: LLM, search keys, Telegram, budget, and your preferences
+pnpm scout:doctor   # checks your setup; add --live to test the keys
+pnpm scout:real     # a real scan (results are saved to .scout-data/)
+pnpm admin          # review, rate, and share the results
+```
+
+`pnpm onboard` asks one question at a time and explains each one. It finds your Telegram chat for
+you, and writes your keys to `.env.local` (gitignored, readable only by you). Prefer editing files
+by hand? Copy `.env.example` to `.env.local` and fill it in.
+
+A digest looks like this (example):
+
+```text
+Bay Event Scout: 3 events
+2 recommended, 1 review-worthy
+
+Recommended (80+)
+
+1. Consumer AI Founders Dinner (91)
+Oct 2, 6:30 PM - SoMa, San Francisco
+Why: Small approval-only dinner for founders building consumer AI apps; Preferred topic: Consumer AI / B2C (+8)
+Link: https://lu.ma/example-dinner
+
+2. Operator Breakfast at a founder house (84)
+Oct 4, 8:30 AM - Palo Alto
+Why: Curated breakfast for seed-stage founders and operators; hosts run a strong recurring series
+Link: https://lu.ma/example-breakfast
+
+Possible (65-79)
+
+1. AI Agents Demo Night (72)
+Oct 3, 6:00 PM - Mission, San Francisco
+Why: Relevant builders, but a large open room with limited curation
+Link: https://lu.ma/example-demo-night
+```
+
+## Make it yours
+
+Your preferences (the "scout profile") drive everything: the searches, what gets filtered out
+before any LLM spend, the scoring prompt, and the score bar. You never have to touch YAML:
+
+```sh
+pnpm profile:show                                     # what the scout is looking for now
+pnpm profile:edit "more B2B go-to-market dinners, add climate tech, no crypto"
+pnpm profile:new "I run partnerships at a B2B SaaS startup and want small dinners with founders and buyers"
+pnpm profile:undo                                     # changed your mind? (run again to redo)
+```
+
+`profile:edit` and `profile:new` use your own LLM key. The LLM rewrites the profile, the result is
+checked against the profile rules, and you see a plain list of what would change before anything
+is saved. Any language works. To start from a preset instead, set `SCOUT_PROFILE` in `.env.local`
+to `b2b-saas-founder`, `climate-tech`, `fintech`, or `consumer-ai-founder` (the default).
+
+Under the hood, a profile is a readable YAML file, if you'd rather edit it yourself:
+
+```yaml
+persona: a climate tech founder who wants small rooms with climate investors and corporate buyers
+topics:
+  - name: Climate tech
+    weight: 8          # boosts matching events; negative weights penalize
+    keywords: [climate tech, clean energy, decarbonization, grid, battery]
+exclude:
+  formats: [hackathon, webinar]   # dropped before any LLM call
+search:
+  phrases: [climate tech founders, climate investors]
+thresholds:
+  recommend: 80
+  review: 65
+```
+
+Every field is explained in [docs/profiles.md](docs/profiles.md).
+
+## Run it on a schedule
+
+- **Free and install-free:** [GitHub Actions](docs/github-actions.md) runs a scan every day in your
+  own private copy and sends the digest to Telegram.
+- **For a team:** run the worker on [Trigger.dev](https://trigger.dev) (09:00, 14:00, and 22:00
+  Pacific, plus a weekly look back for missed events). Store results in Postgres, and host the
+  dashboard on Railway or any Node host with `ADMIN_PASSWORD` set. See [operations](docs/operations.md)
+  and [admin deploy](docs/admin-railway-deploy.md).
+
+## How it works
+
+```
+your profile ─┬─> query packs + LLM search planner
+              │         │
+              │         v
+              │   discovery: Exa · X API · public calendars · RSS · Luma seeds
+              │         │
+              ├─> pre-filter (profile exclusions, past dates) ──> rejected, with reasons
+              │         │
+              │         v
+              │   page fetch (Firecrawl or plain fetch) ─> LLM extraction ─> dedupe
+              │         │
+              └─> LLM scoring + profile topic weights ─> thresholds ─> digest + dashboard
+```
+
+More detail: [discovery](docs/discovery.md), [scoring](docs/scoring.md),
+[source strategy](docs/free-source-strategy.md).
+
+## Commands
+
+| Command | What it does |
+| --- | --- |
+| `pnpm onboard` | Guided setup of `.env.local`, your budget, and your preferences |
+| `pnpm scout:doctor` | Configuration checklist (`--live` tests keys; `pnpm config:check` prints JSON) |
+| `pnpm profile:show` | Show your preferences in plain language |
+| `pnpm profile:edit "<change>"` | Change your preferences with a sentence |
+| `pnpm profile:new "<description>"` | Write new preferences from a description |
+| `pnpm profile:undo` | Undo the last preferences change (run again to redo) |
+| `pnpm scout:mock` / `pnpm scout:real` | Run a scan on sample data / for real |
+| `pnpm admin` | Dashboard at http://127.0.0.1:4310 |
+| `pnpm telegram:chats` | List the Telegram chats that messaged your bot, with their ids |
+| `pnpm telegram:test` | Send a test message with your Telegram settings |
+| `pnpm test` | Typecheck and run all tests |
+
+## Repository layout
+
+- `apps/worker`: scheduled scans and the weekly miss hunt (Trigger.dev tasks in `src/trigger`)
+- `apps/admin`: the dashboard, with feedback buttons for your team
+- `packages/discovery`: connectors, query packs, the source registry, candidate filtering
+- `packages/intelligence`: page fetching, the LLM client, extraction, scoring, dedupe, profile editing
+- `packages/notify`: the digest and Telegram
+- `packages/db`: Postgres, local-file, and in-memory storage
+- `packages/shared`: env loading, budgets, the profile schema, LLM provider configuration
+- `profiles/`: preset profiles
+- `scripts/`: `onboard`, `doctor`, the `profile:*` commands, and `telegram:chats`
+- `.github/workflows/`: CI, plus the Scout, Preferences, and Telegram chat id workflows for GitHub Actions
+
+## Contributing
+
+Suggestions for new Bay Area sources, profile presets, and LLM providers are especially welcome.
+See [CONTRIBUTING.md](CONTRIBUTING.md); security issues go through [SECURITY.md](SECURITY.md).
+
+## Responsible use
+
+The scout reads public pages and official APIs only. It does not log in to Luma, LinkedIn, Meetup,
+or Eventbrite, does not automate the X website, and does not collect attendee or profile data.
+Respect each platform's terms and rate limits when you raise the budget caps.
+
+## License
+
+[MIT](LICENSE)

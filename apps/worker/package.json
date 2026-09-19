@@ -1,0 +1,24 @@
+{
+  "name": "@event-scout/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -b",
+    "dev": "tsx src/index.ts",
+    "scout": "pnpm build && node dist/jobs/run-scout.js",
+    "miss-hunt": "pnpm build && node dist/jobs/run-miss-hunt.js",
+    "typecheck": "tsc -b",
+    "test": "pnpm build && node --test dist/jobs/*.test.js"
+  },
+  "dependencies": {
+    "@event-scout/db": "workspace:*",
+    "@event-scout/discovery": "workspace:*",
+    "@event-scout/intelligence": "workspace:*",
+    "@event-scout/notify": "workspace:*",
+    "@event-scout/shared": "workspace:*",
+    "@trigger.dev/build": "^4.5.12",
+    "@trigger.dev/sdk": "^4.5.12"
+  }
+}

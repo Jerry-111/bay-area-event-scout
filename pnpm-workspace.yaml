@@ -1,0 +1,14 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+allowBuilds:
+  '@depot/cli': true
+  esbuild: true
+onlyBuiltDependencies:
+  - '@depot/cli'
+  - esbuild
+verifyDepsBeforeRun: false
+
+# Run package.json scripts through pnpm's cross-platform shell, so `VAR=value command` scripts
+# such as scout:mock and scout:real also work in Windows cmd and PowerShell.
+shellEmulator: true

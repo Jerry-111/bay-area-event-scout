@@ -1,0 +1,57 @@
+{
+  "name": "bay-event-scout",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A scheduled scout that finds small, high-signal SF Bay Area founder and operator events and sends a Telegram digest plus a team dashboard.",
+  "license": "MIT",
+  "keywords": [
+    "events",
+    "event-discovery",
+    "san-francisco",
+    "bay-area",
+    "founders",
+    "startups",
+    "telegram-bot",
+    "llm",
+    "typescript",
+    "monorepo"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@11.22.0",
+  "type": "module",
+  "scripts": {
+    "postinstall": "tsc -b",
+    "typecheck": "tsc -b && tsc -p scripts",
+    "test": "pnpm typecheck && node --test packages/*/dist/*.test.js apps/worker/dist/jobs/*.test.js apps/admin/dist/views/*.test.js",
+    "dev": "pnpm --filter @event-scout/worker dev",
+    "admin": "pnpm --filter @event-scout/admin dev",
+    "admin:start": "pnpm --filter @event-scout/admin start",
+    "db:migrate": "pnpm --filter @event-scout/db migrate",
+    "scout:mock": "MOCK_MODE=true pnpm --filter @event-scout/worker scout",
+    "scout:real": "MOCK_MODE=false pnpm --filter @event-scout/worker scout",
+    "scout:debug:light": "tsc -b && tsx scripts/run-light-debug.ts",
+    "scout:debug:full": "tsc -b && tsx scripts/run-full-debug.ts",
+    "onboard": "tsc -b && tsx scripts/onboard.ts",
+    "scout:doctor": "tsc -b && tsx scripts/doctor.ts",
+    "doctor": "tsc -b && tsx scripts/doctor.ts",
+    "config:check": "tsc -b && tsx scripts/doctor.ts --json",
+    "profile:new": "tsc -b && tsx scripts/profile-new.ts",
+    "profile:edit": "tsc -b && tsx scripts/profile-edit.ts",
+    "profile:show": "tsc -b && tsx scripts/profile-edit.ts --show",
+    "profile:undo": "tsc -b && tsx scripts/profile-edit.ts --undo",
+    "telegram:test": "MOCK_MODE=false pnpm --filter @event-scout/notify telegram:test",
+    "telegram:chats": "tsc -b && tsx scripts/telegram-chats.ts",
+    "trigger:dev": "trigger dev",
+    "trigger:deploy": "trigger deploy"
+  },
+  "devDependencies": {
+    "@trigger.dev/build": "^4.5.12",
+    "@trigger.dev/sdk": "^4.5.12",
+    "@types/node": "^22.10.7",
+    "trigger.dev": "^4.5.12",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "@event-scout/notify",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "pnpm -w exec tsc -b packages/notify",
+    "typecheck": "pnpm -w exec tsc -b packages/notify",
+    "test": "pnpm -w exec tsc -b packages/notify && node --test dist/*.test.js",
+    "telegram:test": "pnpm build && node dist/telegram-test.js"
+  },
+  "dependencies": {
+    "@event-scout/shared": "workspace:*",
+    "zod": "^4.4.3"
+  }
+}

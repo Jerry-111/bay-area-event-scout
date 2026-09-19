@@ -1,0 +1,19 @@
+node_modules/
+.pnpm-store/
+.history/
+dist/
+.turbo/
+.next/
+.trigger/
+.env
+.env.local
+.env.*.local
+!.env.example
+coverage/
+*.tsbuildinfo
+.DS_Store
+.scout-data/
+
+# Backup written by `pnpm profile:new` and `pnpm onboard` (describe yourself) before overwriting
+# an existing scout.profile.yaml.
+scout.profile.yaml.bak
