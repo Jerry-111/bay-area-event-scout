@@ -2,13 +2,38 @@
 
 [English](README.md) | 中文
 
-一个帮你发现旧金山湾区（SF Bay Area）高质量小型活动的 scout：founder dinner、salon、roundtable 这类很少出现在大型活动日历上的局。它会搜索公开日历、newsletter、网页和 X，读取每个活动页面，按**你自己的**偏好打分，然后把精选结果推送到 Telegram，并提供一个方便团队一起筛选的 dashboard。
+**湾区最好的局都很小，而且满得很快。** 这是一个帮你发现旧金山湾区（SF Bay Area）高质量小型活动的 scout：founder dinner、salon、roundtable 这类很少出现在大型活动日历上的局。它会搜索公开日历、newsletter、网页和 X，读取每个活动页面，按**你自己的**偏好打分，然后把精选结果推送到 Telegram，并提供一个方便团队一起筛选的 dashboard。
+
+<p align="center">
+  <a href="https://github.com/Jerry-111/bay-area-event-scout/releases/tag/v0.1.0">
+    <img src="docs/assets/demo.gif" width="880" alt="dashboard 的 Today 页：一次真实扫描把 953 个链接筛到 5 个推荐，每个都有分数、推荐理由和分项明细">
+  </a>
+  <br>
+  <sub>2026 年 8 月 24 日的一次真实扫描，在 dashboard 里回放：953 个链接 → 15 个活动 → 5 个推荐。
+  <a href="https://github.com/Jerry-111/bay-area-event-scout/releases/tag/v0.1.0">观看高清完整版</a>。</sub>
+</p>
 
 - **覆盖面广。** 除了 Luma 的公开页面，还会扫描 100 多个精选的湾区日历、活动汇总和 newsletter，并通过官方 X API 捕捉那些只在 X 上发布的活动。每次运行都会让 LLM 生成新的搜索词，避免反复搜同样的东西。
 - **用大白话设置偏好。** 想多看/少看的方向、活动形式、想认识的人、优质场地、坚决不要的东西、推荐分数线，都在一个 [scout profile](docs/profiles.md) 里。可以从预设开始（B2B SaaS、climate tech、fintech、consumer AI），也可以用一句话描述自己；之后同样用一句话修改，比如"加上 climate tech，不要 crypto"。
 - **LLM 随便换。** 支持 OpenAI、Anthropic、Gemini、DeepSeek、通义千问/DashScope、OpenRouter、Ollama，以及任何 OpenAI 兼容接口。详见 [LLM providers](docs/llm-providers.md)。
 - **打分可解释。** 每个活动都有 0-100 分、分项明细，以及说明是哪条偏好影响了分数的理由。详见 [scoring](docs/scoring.md)。
 - **运行成本低，预算自己定。** 默认的 GitHub 配置每月约 $6，见[配置与费用](docs/setup-and-costs.zh-CN.md)。
+
+## 你会收到什么
+
+<img src="docs/assets/telegram-digest.png" align="right" width="270" alt="scout 推送的一条真实 Telegram 消息：South Park Commons 的一场 builder hour 以 92 分入选，另一个 60 分的活动列在备选里，都附有理由和链接">
+
+**每次扫描后，Telegram 上一条简短的推送。** 只包含过了你分数线的活动，每个都附上分数、时间、地点、一句话说明为什么适合你，以及链接。差一点过线的活动会单独列出来，好活动不会因为分数略低就错过。截图是一条真实推送。
+
+**一个可以和团队一起筛选的 dashboard：**
+
+- **Act now：** 今天的推荐，每个都附上 scout 的理由。
+- **Worth a look：** 差一点过线的活动，写明差在哪里。
+- **Hidden：** 分数够高、但因为之前已经推送过而被收起来的活动，不会重复打扰你。
+
+每个分数都能展开看分项明细（匹配度、局的质量、社交价值、时效、地点、新鲜度、信息可信度），每张卡片都有反馈按钮，方便团队一起标记。
+
+<br clear="right">
 
 ## 三种用法
 
@@ -120,6 +145,8 @@ thresholds:
 ## 参与贡献
 
 特别欢迎补充新的湾区活动来源、profile 预设和 LLM provider。见 [CONTRIBUTING.md](CONTRIBUTING.md)；安全问题请按 [SECURITY.md](SECURITY.md) 私下报告。
+
+如果 scout 帮你找到了一个好局，给仓库点个 ⭐，能让更多 founder 发现它。
 
 ## 合规使用
 

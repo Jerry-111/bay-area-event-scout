@@ -2,10 +2,20 @@
 
 English | [中文](README.zh-CN.md)
 
-A scout that finds small, high-signal SF Bay Area events for founders, operators, and investors:
-the dinners, salons, and roundtables that rarely make the big event calendars. It searches public
-calendars, newsletters, the web, and X, reads each event page, scores it against **your**
-preferences, and sends a short digest to Telegram, plus a dashboard your team can triage.
+**The best rooms in SF are small, and they fill up fast.** This scout finds high-signal SF Bay
+Area events for founders, operators, and investors: the dinners, salons, and roundtables that
+rarely make the big event calendars. It searches public calendars, newsletters, the web, and X,
+reads each event page, scores it against **your** preferences, and sends a short digest to
+Telegram, plus a dashboard your team can triage.
+
+<p align="center">
+  <a href="https://github.com/Jerry-111/bay-area-event-scout/releases/tag/v0.1.0">
+    <img src="docs/assets/demo.gif" width="880" alt="The dashboard's Today tab: a real scan narrows 953 links to 5 picks, each with a score, the reason it was picked, and a score breakdown">
+  </a>
+  <br>
+  <sub>A real scan from August 24, 2026, replayed in the dashboard: 953 links → 15 events → 5 picks.
+  <a href="https://github.com/Jerry-111/bay-area-event-scout/releases/tag/v0.1.0">Watch the full demo in HD</a>.</sub>
+</p>
 
 - **Wide discovery.** Beyond Luma's public pages, it scans 100+ curated Bay Area calendars, digests,
   and newsletters. It also uses the official X API to catch events that hosts only share on X. An
@@ -20,6 +30,26 @@ preferences, and sends a short digest to Telegram, plus a dashboard your team ca
   which of your preferences moved it. See [scoring](docs/scoring.md).
 - **Cheap to run, and you choose the budget.** The default GitHub setup costs about $6 a month;
   see [setup and costs](docs/setup-and-costs.md).
+
+## What you get
+
+<img src="docs/assets/telegram-digest.png" align="right" width="270" alt="A real Telegram digest from the scout: a builder hour at South Park Commons recommended at 92, and a near miss at 60, each with the reason and the link">
+
+**A short Telegram digest after every scan.** Only the events that clear your bar, each with its
+score, time, place, one line on why it fits you, and the link. Near misses come in a separate
+list, so a good event that scored a little low still reaches you. The screenshot is a real digest.
+
+**A dashboard to triage with your team:**
+
+- **Act now:** today's picks, each with the scout's reasoning.
+- **Worth a look:** events just under the bar, and what held them back.
+- **Hidden:** good events kept out of the digest because you've already seen them, so nothing
+  repeats.
+
+Every score opens into a breakdown (fit, room quality, networking, timeliness, location,
+novelty, evidence), and every card has feedback buttons for your team.
+
+<br clear="right">
 
 ## Three ways to run it
 
@@ -91,32 +121,6 @@ press Ctrl+C. Shortcuts skip the menu: `npm start scan`, `npm start dashboard`,
 Setup saves your keys in `.env.local` (gitignored, readable only by you) and results in
 `.scout-data/`. Developers can use the `pnpm` commands under [Commands](#commands) to run each
 step on its own.
-
-A digest looks like this (example):
-
-```text
-Bay Event Scout: 3 events
-2 recommended, 1 review-worthy
-
-Recommended (80+)
-
-1. Consumer AI Founders Dinner (91)
-Oct 2, 6:30 PM - SoMa, San Francisco
-Why: Small approval-only dinner for founders building consumer AI apps; Preferred topic: Consumer AI / B2C (+8)
-Link: https://lu.ma/example-dinner
-
-2. Operator Breakfast at a founder house (84)
-Oct 4, 8:30 AM - Palo Alto
-Why: Curated breakfast for seed-stage founders and operators; hosts run a strong recurring series
-Link: https://lu.ma/example-breakfast
-
-Possible (65-79)
-
-1. AI Agents Demo Night (72)
-Oct 3, 6:00 PM - Mission, San Francisco
-Why: Relevant builders, but a large open room with limited curation
-Link: https://lu.ma/example-demo-night
-```
 
 ## Make it yours
 
@@ -220,6 +224,8 @@ More detail: [discovery](docs/discovery.md), [scoring](docs/scoring.md),
 
 Suggestions for new Bay Area sources, profile presets, and LLM providers are especially welcome.
 See [CONTRIBUTING.md](CONTRIBUTING.md); security issues go through [SECURITY.md](SECURITY.md).
+
+If the scout finds you a good room, a ⭐ on the repo helps other founders find it too.
 
 ## Responsible use
 
