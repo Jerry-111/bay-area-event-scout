@@ -214,6 +214,27 @@ The dashboard has four tabs, each with a shareable link:
 - `#tuning` — the active profile, captured feedback, source/query yield, organizer yield, and misses
   found by the weekly miss hunt.
 
+<table>
+  <tr>
+    <td width="50%"><img src="assets/dashboard-today.png" alt="The Today tab: 953 links found, 15 events parsed, 5 recommended, with the Act now cards"></td>
+    <td width="50%"><img src="assets/dashboard-history.png" alt="The History tab: every event the scout has sent, grouped by day, with the reason it was sent"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub><code>#today</code></sub></td>
+    <td align="center"><sub><code>#history</code></sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="assets/dashboard-health.png" alt="The Health tab: each scan's funnel, from links found and dropped to events scored and recommended"></td>
+    <td width="50%"><img src="assets/dashboard-tuning.png" alt="The Tuning tab: the active preferences, your team's feedback, and which sources earn their search budget"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub><code>#health</code></sub></td>
+    <td align="center"><sub><code>#tuning</code></sub></td>
+  </tr>
+</table>
+
+<sub>A real scan from August 24, 2026, replayed from the local file store.</sub>
+
 Endpoints: `GET /`, `GET /health`, `GET /api/dashboard`, `GET /api/runs`, `GET /api/events`,
 `GET /api/recommendations`, `GET /api/candidates/rejected`, `POST /api/feedback`.
 

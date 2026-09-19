@@ -51,6 +51,19 @@ novelty, evidence), and every card has feedback buttons for your team.
 
 <br clear="right">
 
+<table>
+  <tr>
+    <td width="33%"><img src="docs/assets/dashboard-history.png" alt="The History tab: every event the scout has sent, grouped by day, with the reason it was sent"></td>
+    <td width="33%"><img src="docs/assets/dashboard-health.png" alt="The Health tab: each scan's funnel, from links found and dropped to events scored and recommended"></td>
+    <td width="33%"><img src="docs/assets/dashboard-tuning.png" alt="The Tuning tab: the active preferences, your team's feedback, and which sources earn their search budget"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub><b>History:</b> everything it has sent</sub></td>
+    <td align="center"><sub><b>Health:</b> each scan, from links to picks</sub></td>
+    <td align="center"><sub><b>Tuning:</b> which sources earn their budget</sub></td>
+  </tr>
+</table>
+
 ## Where it looks
 
 A curated list of 100+ Bay Area sources, plus fresh web searches that an LLM planner writes for
@@ -127,14 +140,7 @@ two) and asks a few setup questions. Press Enter to skip any of them; without an
 see sample data. Then it opens the dashboard in your browser. After that, `npm start` shows a
 short menu:
 
-```text
-What would you like to do?
-  1) Scan for new events, then open the dashboard (last scan: 2 days ago)
-  2) Open the dashboard
-  3) Show or change my preferences
-  4) Change keys, Telegram, budget, or preferences (setup)
-  5) Check my setup
-```
+<img src="docs/assets/terminal-npm-start.png" width="760" alt="npm start in a terminal: a menu with five choices (scan for new events, open the dashboard, show or change my preferences, setup, check my setup); choosing 2 opens the dashboard at http://127.0.0.1:4310">
 
 A scan takes 3–10 minutes and shows its progress as it goes. The dashboard stays up until you
 press Ctrl+C. Shortcuts skip the menu: `npm start scan`, `npm start dashboard`,
@@ -158,6 +164,8 @@ pnpm profile:edit "more B2B go-to-market dinners, add climate tech, no crypto"
 pnpm profile:new "I run partnerships at a B2B SaaS startup and want small dinners with founders and buyers"
 pnpm profile:undo                                     # changed your mind? (run again to redo)
 ```
+
+<img src="docs/assets/terminal-profile-show.png" width="760" alt="pnpm profile:show printing the built-in consumer-ai-founder preferences in plain words: who it's for, the region, topics with their weights, people to meet, preferred and never-shown formats, and the 80 and 65 score bars">
 
 `profile:edit` and `profile:new` use your own LLM key. The LLM rewrites the profile, the result is
 checked against the profile rules, and you see a plain list of what would change before anything
@@ -195,19 +203,14 @@ Every field is explained in [docs/profiles.md](docs/profiles.md).
 
 ## How it works
 
-```
-your profile ─┬─> query packs + LLM search planner
-              │         │
-              │         v
-              │   discovery: Exa · X API · public calendars · RSS · Luma seeds
-              │         │
-              ├─> pre-filter (profile exclusions, past dates) ──> rejected, with reasons
-              │         │
-              │         v
-              │   page fetch (Firecrawl or plain fetch) ─> LLM extraction ─> dedupe
-              │         │
-              └─> LLM scoring + profile topic weights ─> thresholds ─> digest + dashboard
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/how-it-works-dark.png">
+  <img src="docs/assets/how-it-works-light.png" alt="How it works in six steps: 1 Plan: your profile plus an LLM planner picks the scan's searches. 2 Discover: 100+ Bay Area calendars and newsletters, web search, and X. 3 Filter: past dates and hard no's are dropped before any LLM spend. 4 Read: the most promising pages, up to your budget, are extracted and deduped. 5 Score: 0 to 100 against your profile, with a breakdown and the reason. 6 Deliver: 80 and up go to Telegram and Act now; 65 to 79 to Worth a look. In a real scan on Aug 24, 2026: 953 links found, 275 dropped early, 15 events read and scored, 5 picks.">
+</picture>
+
+Search, pre-filter, and page fetching need no LLM; the LLM plans the searches, extracts each
+event, and scores it. Sources: Exa, the X API, public calendars, RSS, and Luma. Pages: Firecrawl
+or a plain fetch.
 
 More detail: [discovery](docs/discovery.md), [scoring](docs/scoring.md),
 [source strategy](docs/free-source-strategy.md).

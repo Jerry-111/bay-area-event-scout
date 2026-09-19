@@ -4,6 +4,12 @@ Every extracted event gets a 0-100 score with a component breakdown and a short 
 recommended and rejected events are explainable. What counts as a good event comes from the active
 [scout profile](profiles.md); this page describes the mechanics.
 
+<p align="center">
+  <img src="assets/score-breakdown.png" width="362" alt="A scored event in the dashboard: SF HOPR Dinner for Founders at 94 out of 100, the scout's reasoning, and the breakdown: user fit 24 of 25, room quality 19 of 20, networking 14 of 15, and 9 of 10 each for timeliness, location, novelty, and evidence">
+  <br>
+  <sub>A real event from the August 24, 2026 scan, as the dashboard shows it.</sub>
+</p>
+
 ## Pipeline
 
 1. **Pre-LLM filter** (`packages/discovery/src/normalize.ts`): candidates with an explicit past date,

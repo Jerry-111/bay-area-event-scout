@@ -35,6 +35,19 @@
 
 <br clear="right">
 
+<table>
+  <tr>
+    <td width="33%"><img src="docs/assets/dashboard-history.png" alt="History 页：推送过的全部活动，按天分组，附推送理由"></td>
+    <td width="33%"><img src="docs/assets/dashboard-health.png" alt="Health 页：每次扫描的漏斗，从找到的链接、提前丢弃的数量，到打分和推荐"></td>
+    <td width="33%"><img src="docs/assets/dashboard-tuning.png" alt="Tuning 页：当前偏好、团队的反馈，以及哪些来源值得花搜索预算"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub><b>History：</b>推送过的全部活动</sub></td>
+    <td align="center"><sub><b>Health：</b>每次扫描，从链接到推荐</sub></td>
+    <td align="center"><sub><b>Tuning：</b>哪些来源值得花预算</sub></td>
+  </tr>
+</table>
+
 ## 它在哪里找
 
 一份 100 多个湾区来源的精选清单，加上每次扫描时 LLM planner 新写的网页搜索：
@@ -88,14 +101,7 @@ npm start
 
 只需要这一个命令。第一次运行时，`npm start` 会自动安装（一两分钟），问几个配置问题（每一项都可以直接按回车跳过；没有 LLM key 时显示示例数据），然后在浏览器里打开 dashboard。之后每次运行 `npm start` 都会显示一个菜单：
 
-```text
-What would you like to do?
-  1) Scan for new events, then open the dashboard (last scan: 2 days ago)
-  2) Open the dashboard
-  3) Show or change my preferences
-  4) Change keys, Telegram, budget, or preferences (setup)
-  5) Check my setup
-```
+<img src="docs/assets/terminal-npm-start.png" width="760" alt="终端里运行 npm start：一个有五个选项的菜单（扫描新活动、打开 dashboard、查看或修改偏好、配置、检查配置）；选 2 会在 http://127.0.0.1:4310 打开 dashboard">
 
 一次扫描大约 3–10 分钟，过程中会显示进度；dashboard 会一直开着，按 Ctrl+C 关闭。也可以跳过菜单直接运行：`npm start scan`、`npm start dashboard`、`npm start setup`、`npm start preferences`、`npm start undo`、`npm start doctor`。
 
@@ -111,6 +117,8 @@ pnpm profile:edit "多一些 B2B go-to-market 的饭局，加上 climate tech，
 pnpm profile:new "我在一家 B2B SaaS 创业公司做 partnership，想参加有 founder 和企业买家的小型饭局"
 pnpm profile:undo                                     # 后悔了？（再运行一次就是恢复）
 ```
+
+<img src="docs/assets/terminal-profile-show.png" width="760" alt="pnpm profile:show 用大白话列出内置的 consumer-ai-founder 偏好：为谁找、地区、各个方向和权重、想认识的人、喜欢和永远不要的活动形式，以及 80 和 65 两条分数线">
 
 `profile:edit` 和 `profile:new` 用的是你自己的 LLM key：LLM 改写 profile，结果会按 profile 规则校验，保存之前你会看到一份"具体改了什么"的清单。中英文都可以。也可以直接从预设开始：在 `.env.local` 里把 `SCOUT_PROFILE` 设成 `b2b-saas-founder`、`climate-tech`、`fintech` 或 `consumer-ai-founder`（默认）。
 
@@ -140,19 +148,10 @@ thresholds:
 
 ## 工作原理
 
-```
-your profile ─┬─> query packs + LLM search planner
-              │         │
-              │         v
-              │   discovery: Exa · X API · public calendars · RSS · Luma seeds
-              │         │
-              ├─> pre-filter (profile exclusions, past dates) ──> rejected, with reasons
-              │         │
-              │         v
-              │   page fetch (Firecrawl or plain fetch) ─> LLM extraction ─> dedupe
-              │         │
-              └─> LLM scoring + profile topic weights ─> thresholds ─> digest + dashboard
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/how-it-works-dark.png">
+  <img src="docs/assets/how-it-works-light.png" alt="工作原理六步：1 规划：按你的 profile 和 LLM planner 决定这次搜什么。2 发现：100 多个湾区日历和 newsletter、网页搜索和 X。3 过滤：调用 LLM 之前先丢掉过期的和你坚决不要的。4 读取：在预算内读取最有希望的页面，抽取信息并去重。5 打分：按你的偏好打 0 到 100 分，附分项明细和理由。6 推送：80 分以上进 Telegram 和 Act now，65 到 79 分进 Worth a look。2026 年 8 月 24 日的一次真实扫描：找到 953 个链接，提前丢弃 275 个，读取并打分 15 个活动，推荐 5 个。">
+</picture>
 
 你的 profile 决定搜什么；调用 LLM 之前，先按 profile 的排除规则和过期日期把候选过滤一遍（被过滤的都会写明原因）；剩下的读取活动页面、抽取信息、去重，再按你的偏好打分，过线的进推送和 dashboard。更多细节：[discovery](docs/discovery.md)、[scoring](docs/scoring.md)、[source strategy](docs/free-source-strategy.md)。
 
