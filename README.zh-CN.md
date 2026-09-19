@@ -8,27 +8,27 @@
 - **用大白话设置偏好。** 想多看/少看的方向、活动形式、想认识的人、优质场地、坚决不要的东西、推荐分数线，都在一个 [scout profile](docs/profiles.md) 里。可以从预设开始（B2B SaaS、climate tech、fintech、consumer AI），也可以用一句话描述自己；之后同样用一句话修改，比如"加上 climate tech，不要 crypto"。
 - **LLM 随便换。** 支持 OpenAI、Anthropic、Gemini、DeepSeek、通义千问/DashScope、OpenRouter、Ollama，以及任何 OpenAI 兼容接口。详见 [LLM providers](docs/llm-providers.md)。
 - **打分可解释。** 每个活动都有 0-100 分、分项明细，以及说明是哪条偏好影响了分数的理由。详见 [scoring](docs/scoring.md)。
-- **运行成本低，预算自己定。** 每月最低约 $2，见[配置与费用](docs/setup-and-costs.zh-CN.md)。
+- **运行成本低，预算自己定。** 默认的 GitHub 配置每月约 $6，见[配置与费用](docs/setup-and-costs.zh-CN.md)。
 
-## 选一种用法
+## 我该选哪种？
 
-| | 需要什么 | 适合 |
-| --- | --- | --- |
-| **[用 GitHub 每天推送](docs/github-actions.zh-CN.md)** | 一个 GitHub 账号、一个 LLM key、一个 Telegram 机器人，什么都不用装 | 大多数人。在浏览器里大约 10 分钟配置完 |
-| **[在自己电脑上运行](#在自己电脑上运行)** | Node.js，然后只要一个命令：`npm start` | 用 dashboard、先试试、自己折腾 |
-| **[团队线上部署](docs/operations.md)** | Trigger.dev、Postgres、一个 Node 主机 | 团队共用 dashboard，定时扫描 |
+三选一，之后也可以换，或者组合起来用。
+
+- **"每天给我推送好活动就行。"** 用 **[GitHub Actions](docs/github-actions.zh-CN.md)**：每天在云端扫描两次（电脑关着也没关系），精选活动推送到 Telegram。运行免费，不用装任何东西，在浏览器里大约 10 分钟配置完。
+- **"我想在 dashboard 里浏览、筛选、给活动打分。"** 用 **[自己的电脑](#在自己电脑上运行)**：装好 Node.js，运行 `npm start`，你想扫的时候才扫。也可以让云端负责扫描：在 GitHub 那套里加一个免费数据库，然后[在这里看它的结果](docs/github-actions.zh-CN.md#在-dashboard-里看结果可选)。
+- **"团队要共用一个线上 dashboard。"** 用 **[线上部署](docs/operations.md)**：Trigger.dev 每天扫描三次，Postgres 保存历史，dashboard 部署在服务器上。配置最多，适合会用终端的人。
 
 ## 要花多少钱
 
-用示例数据试用完全免费。真实扫描时，你直接向各家服务付费，预算设置会限制每次扫描最多用多少：
+用示例数据试用完全免费。真实扫描时，你直接向各家服务付费；预算档位限制每次扫描最多用多少，每天扫几次由你决定：
 
-| `SCOUT_BUDGET` | 每次扫描 | 建议频率 | 每月 |
-| --- | ---: | --- | ---: |
-| `small` | ~$0.25 | 每天 1 次 | ~$2 |
-| `medium` | ~$0.50 | 每天 2 次 | ~$20 |
-| `large` | ~$1，另加 X | 每天 3 次 | ~$80–130 |
+| `SCOUT_BUDGET` | 每次扫描 | 每天 1 次 | 每天 2 次（GitHub 默认） | 每天 3 次 |
+| --- | ---: | ---: | ---: | ---: |
+| `small`（GitHub 默认） | ~$0.25 | 约 $2/月 | 约 $6/月 | 约 $13/月 |
+| `medium` | ~$0.50 | 约 $5/月 | 约 $20/月 | 约 $35/月 |
+| `large` | ~$1 | 约 $19/月 | 约 $48/月 | 约 $77/月 |
 
-只有 LLM key 是必需的；推荐加上 Telegram（免费）和 Exa；X 和 Firecrawl 是可选的。每个 key 怎么一步步申请、各家 LLM 价格对比，见[配置与费用](docs/setup-and-costs.zh-CN.md)。
+如果加了 X，每天只搜一次：small、medium、large 每月分别多约 $4、$8、$23。只有 LLM key 是必需的；推荐加上 Telegram（免费）和 Exa；X 和 Firecrawl 是可选的。每个 key 怎么一步步申请、各家 LLM 价格对比，见[配置与费用](docs/setup-and-costs.zh-CN.md)。
 
 ## 在自己电脑上运行
 
@@ -91,7 +91,7 @@ thresholds:
 
 ## 定时运行
 
-- **免费、不用安装：** [GitHub Actions](docs/github-actions.zh-CN.md) 每天在你自己的私有仓库里扫描一次，结果推送到 Telegram。
+- **免费、不用安装：** [GitHub Actions](docs/github-actions.zh-CN.md) 在你自己的私有仓库里每天扫描两次（设置 `SCANS_PER_DAY` 可改成 1 或 3 次），结果推送到 Telegram，每周还会回头找一次漏掉的活动。
 - **团队使用：** 把 worker 部署到 [Trigger.dev](https://trigger.dev)（太平洋时间每天 09:00、14:00、22:00 扫描，外加每周一次的漏检回顾），结果存进 Postgres，dashboard 部署到 Railway 或任何 Node 主机（记得设置 `ADMIN_PASSWORD`）。详见 [operations](docs/operations.md) 和 [admin deploy](docs/admin-railway-deploy.md)。
 
 ## 常用命令

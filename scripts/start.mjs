@@ -203,6 +203,7 @@ function lastScanTime(env) {
 
 async function chooseAction(settings) {
   const canScan = Boolean(settings.env?.llm.enabled);
+  const hasDatabase = Boolean(settings.env?.databaseUrl);
   const options = canScan
     ? [
         { action: "scan", label: `Scan for new events, then open the dashboard (${describeLastScan(settings.lastScan)})` },
@@ -212,15 +213,15 @@ async function chooseAction(settings) {
         { action: "doctor", label: "Check my setup" }
       ]
     : [
-        { action: "dashboard", label: "Open the dashboard with sample data" },
-        { action: "setup", label: "Set up an LLM key (and more) to find real events" },
+        { action: "dashboard", label: hasDatabase ? "Open the dashboard (results from your database)" : "Open the dashboard with sample data" },
+        { action: "setup", label: "Set up an LLM key (and more) to scan from this computer" },
         { action: "doctor", label: "Check my setup" }
       ];
   const scanIsStale =
     settings.lastScan === null || (settings.lastScan instanceof Date && Date.now() - settings.lastScan.getTime() > STALE_SCAN_HOURS * 3_600_000);
   const defaultIndex = canScan && !scanIsStale ? 2 : 1;
 
-  if (!canScan) console.log("No LLM key is set up yet, so the dashboard shows sample data.\n");
+  if (!canScan && !hasDatabase) console.log("No LLM key is set up yet, so the dashboard shows sample data.\n");
   console.log("What would you like to do?");
   options.forEach((option, index) => console.log(`  ${index + 1}) ${option.label}`));
   const rl = createPromptInterface({ input: process.stdin, output: process.stdout });

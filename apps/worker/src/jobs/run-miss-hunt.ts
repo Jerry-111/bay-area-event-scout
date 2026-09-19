@@ -1,6 +1,7 @@
+import { appendFileSync } from "node:fs";
 import { createEventStore } from "@event-scout/db";
 import { buildMissHuntQueryPack, discoverCandidatesWithStats } from "@event-scout/discovery";
-import { classifyWeeklyMissHunt } from "@event-scout/intelligence";
+import { classifyWeeklyMissHunt, type WeeklyMissHuntResult } from "@event-scout/intelligence";
 import {
   type AppEnv,
   type RunStats,
@@ -84,6 +85,7 @@ export async function runMissHunt(env: AppEnv = loadRuntimeEnv()): Promise<RunSt
       xBudgetRemaining: discovery.stats.xBudgetRemaining
     });
     await store.finishRun(run.id, stats);
+    writeGithubJobSummary(classifications);
     logger.info("miss hunt finished", {
       runId: run.id,
       checked: classifications.checked,
@@ -98,6 +100,53 @@ export async function runMissHunt(env: AppEnv = loadRuntimeEnv()): Promise<RunSt
   } finally {
     await store.close?.();
   }
+}
+
+const MISS_REASON_LABELS: Record<string, string> = {
+  source_gap: "the scout does not read where it was posted",
+  query_gap: "no search matched it",
+  extraction_failure: "its page could not be read",
+  scoring_false_negative: "it was scored too low",
+  dedupe_error: "it was merged with another event",
+  unknown: "unclear why"
+};
+
+/**
+ * In GitHub Actions, where there may be no dashboard, puts the week's findings on the run's
+ * summary page: good events the daily scans missed, why, and what would have caught them.
+ */
+function writeGithubJobSummary(result: WeeklyMissHuntResult): void {
+  const summaryPath = process.env.GITHUB_STEP_SUMMARY;
+  if (!summaryPath) return;
+  const lines = [
+    "### Weekly look back",
+    "",
+    `Checked ${result.checked} event${result.checked === 1 ? "" : "s"} from the past week against what the daily scans found.`,
+    ""
+  ];
+  // The same event can turn up under several searches; list it once.
+  const missed = [...new Map(result.missed.map((miss) => [miss.eventUrl ?? miss.eventTitle.toLowerCase(), miss])).values()];
+  if (!missed.length) {
+    lines.push("Nothing worth your time was missed.");
+  } else {
+    lines.push(`**${missed.length} good event${missed.length === 1 ? " was" : "s were"} missed:**`, "");
+    for (const miss of missed) {
+      const title = escapeMarkdown(miss.eventTitle);
+      const name = miss.eventUrl ? `[${title}](${miss.eventUrl})` : title;
+      const reason = MISS_REASON_LABELS[miss.missReason] ?? miss.missReason;
+      const fix = miss.suggestedQuery ? ` Would have been found by searching: ${escapeMarkdown(miss.suggestedQuery)}.` : miss.suggestedSource ? ` Source to add: ${escapeMarkdown(miss.suggestedSource)}.` : "";
+      lines.push(`- ${name}: ${reason}.${fix}`);
+    }
+  }
+  try {
+    appendFileSync(summaryPath, `${lines.join("\n")}\n`, "utf8");
+  } catch (error) {
+    logger.warn("could not write the GitHub job summary", { error: error instanceof Error ? error.message : String(error) });
+  }
+}
+
+function escapeMarkdown(text: string): string {
+  return text.replace(/[\\`*_[\]<>|]/g, "\\$&");
 }
 
 function missHuntWeek(now: Date): { start: string; end: string } {

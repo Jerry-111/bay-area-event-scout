@@ -23,7 +23,8 @@ feeds for free; they just find fewer events than with Exa.
 ## What it costs
 
 Two things decide the bill: how much each scan may do (`SCOUT_BUDGET`) and how many scans you run
-a day. Setup (`npm start` or `pnpm onboard`) asks for a budget; GitHub Actions uses `small` unless you change it.
+a day. Setup (`npm start` or `pnpm onboard`) asks for a budget. GitHub Actions uses `small` and
+scans twice a day unless you change it (`SCANS_PER_DAY`).
 
 | | `small` | `medium` | `large` |
 | --- | ---: | ---: | ---: |
@@ -33,15 +34,16 @@ a day. Setup (`npm start` or `pnpm onboard`) asks for a budget; GitHub Actions u
 | X posts read per day | 25 | 50 | 150 |
 | Exa per scan | $0.21 | $0.42 | $0.84 |
 | LLM per scan (OpenAI `gpt-5-mini`) | ~$0.05 | ~$0.08 | ~$0.13 |
-| X per day, if you set it up | $0.13 | $0.25 | $0.75 |
-| Suggested scans per day | 1 | 2 | 3 |
-| **Per month at that pace** | **~$2** | **~$20** | **~$80** |
-| Plus X, if set up | +$4 | +$8 | +$23 |
-| Plus Firecrawl, if set up | free tier | free tier | +$16 |
+| **Per month, 1 scan a day** | **~$2** | **~$5** | **~$19** |
+| **Per month, 2 scans a day** (GitHub default) | **~$6** | **~$20** | **~$48** |
+| **Per month, 3 scans a day** (Trigger.dev default) | **~$13** | **~$35** | **~$77** |
+| Plus X, if set up (searched once a day) | +$4 | +$8 | +$23 |
+| Plus Firecrawl, if set up | free tier | free tier up to 2 a day | +$16 |
 
-The monthly totals subtract Exa's $10 monthly credit. `large` with everything turned on is what
-this project used to default to: about **$110–130 a month**, most of it Exa. Leaving
-`SCOUT_BUDGET` unset still means `large`, so existing setups keep behaving the same.
+The monthly totals subtract Exa's $10 monthly credit. `large` at three scans a day with X and
+Firecrawl turned on is what this project used to default to: about **$110–130 a month**, most of it
+Exa. Leaving `SCOUT_BUDGET` unset still means `large`, so existing setups keep behaving the same.
+The weekly look back for missed events adds a few cents a week.
 
 How these are estimated: an Exa search asks for 12 results with highlights ($0.007 + $0.002
 for the two results past 10 + $0.012 for highlights). An LLM page read is about 5,000 tokens in and
@@ -50,8 +52,8 @@ real scans often cost less.
 
 ### Choosing an LLM
 
-Monthly LLM cost at the most expensive setting (`large`, 3 scans a day). For `small` at one scan a
-day, divide by about 8.
+Monthly LLM cost at the most expensive setting (`large`, 3 scans a day). For the GitHub default
+(`small`, 2 scans a day), divide by about 4.
 
 | `LLM_PROVIDER` (default models) | Per `large` scan | Per month | Notes |
 | --- | ---: | ---: | --- |
@@ -74,9 +76,10 @@ deepseek-flash about $0.15 / $0.60 off-peak.
 
 | Option | Cost | Good for |
 | --- | --- | --- |
-| [GitHub Actions](github-actions.md) | Free. Private copies get 2,000 free minutes a month, and a scan uses about 5–15. | A daily Telegram digest with nothing to install. |
-| Your computer | Free | Trying it out, occasional scans, the dashboard at `localhost`. |
-| [Trigger.dev](operations.md#triggerdev) + Postgres + [Railway](admin-railway-deploy.md) | Trigger.dev's free plan covers the scans (about $1–2 of its $5 monthly credit); Neon Postgres has a free tier; Railway is about $5–25 a month for an always-on dashboard. | Teams sharing a hosted dashboard. |
+| [GitHub Actions](github-actions.md) | Free. Private copies get 2,000 free minutes a month; two scans a day use about 300–900 of them. | A daily Telegram digest with nothing to install. |
+| Your computer (`npm start`) | Free | The dashboard, occasional scans, trying it out. |
+| GitHub Actions + a free [Neon](https://neon.com) database + `npm start` | Free | Scans in the cloud, dashboard on your computer ([how](github-actions.md#see-your-results-in-a-dashboard-optional)). |
+| [Trigger.dev](operations.md#triggerdev) + Postgres + [Railway](admin-railway-deploy.md) | Trigger.dev's free plan covers the scans (about $1–2 of its $5 monthly credit); Neon has a free tier; Railway is about $5–25 a month for an always-on dashboard. | Teams sharing a hosted dashboard. |
 
 ## Setting up each piece
 
@@ -166,8 +169,8 @@ which works for most event pages.
 ## Keeping the bill down
 
 - Pick a smaller `SCOUT_BUDGET`, or lower one `MAX_*` value (`.env.example` lists them).
-- Scan less often. With GitHub Actions, edit the `cron` lines in `.github/workflows/scout.yml`; with
-  Trigger.dev, remove times from `SCAN_SCHEDULES`.
+- Scan less often. With GitHub Actions, set `SCANS_PER_DAY` to `1`; with Trigger.dev, remove times
+  from `SCAN_SCHEDULES`.
 - Skip X and Firecrawl; they are the easiest line items to drop.
 - Use prepaid credit with each provider, so the most you can spend is what you loaded.
 - Run `pnpm scout:doctor`: its **Budget** line shows what one scan may use.

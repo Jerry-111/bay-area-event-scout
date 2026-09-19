@@ -2,9 +2,10 @@
 
 English | [中文](github-actions.zh-CN.md)
 
-This is the easiest way to get a daily digest: the scout runs in your own private copy of this
-repository on GitHub's servers, and the picks arrive on Telegram. There is nothing to install and
-no server to keep running, and it is all done in the browser. It takes about 10 minutes.
+This is the easiest way to get a daily digest: the scout runs twice a day in your own private copy
+of this repository on GitHub's servers, and the picks arrive on Telegram. Your computer can be off.
+There is nothing to install and no server to keep running, and it is all done in the browser. It
+takes about 10 minutes.
 
 You need a free [GitHub account](https://github.com/signup), an LLM key, and a Telegram bot. Exa is
 recommended too. [Setup and costs](setup-and-costs.md) says where to get each one and what it costs.
@@ -33,6 +34,7 @@ encrypted and never shown in logs.
 | `EXA_API_KEY` | Recommended | Your Exa key |
 | `X_BEARER_TOKEN` | Optional | Your X API bearer token |
 | `FIRECRAWL_API_KEY` | Optional | Your Firecrawl key |
+| `DATABASE_URL` | Optional | Only for a dashboard; see [below](#see-your-results-in-a-dashboard-optional) |
 
 On the **Variables** tab, click **New repository variable** for these settings:
 
@@ -40,6 +42,7 @@ On the **Variables** tab, click **New repository variable** for these settings:
 | --- | --- | --- |
 | `LLM_PROVIDER` | Required | `openai`, `gemini`, `anthropic`, `deepseek`, `dashscope-intl`, `dashscope`, or `openrouter` |
 | `SCOUT_PROFILE` | Optional | A starting point for your preferences: `b2b-saas-founder`, `climate-tech`, `fintech`, or `consumer-ai-founder` (the default) |
+| `SCANS_PER_DAY` | Optional | `1`, `2` (the default), or `3`; see [step 6](#6-schedule) |
 | `SCOUT_BUDGET` | Optional | `small` (the default here), `medium`, or `large`; see [costs](setup-and-costs.md#what-it-costs) |
 | `LLM_MODEL` | Optional | A different model from your provider |
 | `TELEGRAM_CHAT_ID` | Add in step 4 | Where the digest goes |
@@ -47,12 +50,12 @@ On the **Variables** tab, click **New repository variable** for these settings:
 ## 3. Try it
 
 1. Open the **Actions** tab. If GitHub asks, click **I understand my workflows, go ahead and enable them**.
-2. Click **Scout** on the left, then **Run workflow**. Tick **Use sample data** and click **Run workflow**.
-   This free test checks the setup without using your keys.
+2. Click **Scout** on the left, then **Run workflow**. Under **What to run**, pick
+   **sample scan (a free test that uses no keys)** and click **Run workflow**.
 3. When the run finishes (a minute or two), open it. The summary page starts with a **Setup check**
    table (which keys your copy has, never their values), followed by a sample digest.
-4. Run **Scout** again with the box unticked for your first real scan. Its digest shows up on the
-   run's summary page, and on Telegram once step 4 is done.
+4. Run **Scout** again with **scan** for your first real scan. Its digest shows up on the run's
+   summary page, and on Telegram once step 4 is done.
 
 ## 4. Telegram chat id
 
@@ -84,26 +87,45 @@ your `sources` section is never touched. If you like editing files, the pencil i
 
 ## 6. Schedule
 
-The scout runs once a day at 16:17 UTC (9:17 in San Francisco in summer, 8:17 in winter). To change
-that, open `.github/workflows/scout.yml` in your copy, click the pencil icon, and edit the `cron`
-line. Each line is one scan (times are UTC):
+The scout scans twice a day by default: around 9:17 in the morning and 18:17 in the evening, San
+Francisco time (an hour earlier in winter, since GitHub schedules run on UTC). The morning scan
+also searches X. The two scans use different searches, so the evening one is not a repeat.
 
-```yaml
-    - cron: "17 16 * * *"   # 9:17 PDT
-    - cron: "17 1 * * *"    # 18:17 PDT, a second scan each day
-```
+To change how often it scans, set the `SCANS_PER_DAY` variable (step 2):
 
-More scans cost more ([costs](setup-and-costs.md#what-it-costs)). GitHub sometimes starts
-scheduled runs a few minutes late. In a public copy, GitHub pauses the schedule after 60 days with
-no commits; private copies are not affected.
+| `SCANS_PER_DAY` | Scans |
+| --- | --- |
+| `1` | Morning |
+| `2` (default) | Morning and evening |
+| `3` | Morning, midday (13:17), and evening |
+
+More scans cost more ([costs](setup-and-costs.md#what-it-costs)). GitHub sometimes starts scheduled
+runs a few minutes late. In a public copy, GitHub pauses schedules after 60 days with no commits;
+private copies are not affected. To choose other times, edit the `cron` lines at the top of
+`.github/workflows/scout.yml` (and the matching lines in its `if:` below them).
+
+**Weekly look back.** Every Sunday evening the scout also searches the past week for good events
+the daily scans missed, and lists them on that run's summary page with the reason (for example, a
+calendar it does not read yet). It needs the Exa key. To run it now: **Run workflow → look back for
+missed events**.
+
+## See your results in a dashboard (optional)
+
+GitHub Actions has no dashboard; the digest is the output. To also browse and rate events in the
+dashboard, have the scans save to a free database, and open the dashboard on your computer:
+
+1. Create a free Postgres database at [neon.com](https://neon.com) and copy its connection string
+   (it starts with `postgresql://`).
+2. In your copy, add it as the `DATABASE_URL` secret (step 2). From the next scan on, results are
+   saved there instead of the Actions cache.
+3. On your computer, get the scout and run `npm start` (see the [README](../README.md#on-your-computer)).
+   When setup asks about **Cloud results**, paste the same connection string, then choose
+   **Open the dashboard**.
 
 ## Good to know
 
-- **Past results:** each scan keeps its history in the Actions cache, so an event is only
-  recommended once. Deleting the caches (**Actions → Caches**) starts fresh.
-- **Dashboard:** this setup has no dashboard; the digest is the output. For the dashboard, run the
-  scout on your computer (see the [README](../README.md)), or use the hosted setup in
-  [operations](operations.md).
+- **Past results:** each scan keeps its history, so an event is only recommended once. Without a
+  database it lives in the Actions cache; deleting the caches (**Actions → Caches**) starts fresh.
 - **Updates:** a copy made from a template does not update itself. To pick up a new version, make a
   new copy and add your secrets again, or merge from this repository with git.
 - **Turning it off:** in **Actions**, open **Scout**, click **…**, and choose **Disable workflow**.

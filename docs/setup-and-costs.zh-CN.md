@@ -19,7 +19,7 @@
 
 ## 要花多少钱
 
-账单由两件事决定：每次扫描允许做多少事（`SCOUT_BUDGET`），以及每天扫几次。配置时（`npm start` 或 `pnpm onboard`）会问你选哪一档；GitHub Actions 默认用 `small`。
+账单由两件事决定：每次扫描允许做多少事（`SCOUT_BUDGET`），以及每天扫几次。配置时（`npm start` 或 `pnpm onboard`）会问你选哪一档；GitHub Actions 默认用 `small`、每天扫两次（可以用 `SCANS_PER_DAY` 修改）。
 
 | | `small` | `medium` | `large` |
 | --- | ---: | ---: | ---: |
@@ -29,19 +29,19 @@
 | 每天读取的 X 帖子 | 25 | 50 | 150 |
 | 每次扫描的 Exa 费用 | $0.21 | $0.42 | $0.84 |
 | 每次扫描的 LLM 费用（OpenAI `gpt-5-mini`） | ~$0.05 | ~$0.08 | ~$0.13 |
-| 每天的 X 费用（如果配置了） | $0.13 | $0.25 | $0.75 |
-| 建议每天扫描次数 | 1 | 2 | 3 |
-| **按这个频率每月合计** | **~$2** | **~$20** | **~$80** |
-| 另加 X（如果配置了） | +$4 | +$8 | +$23 |
-| 另加 Firecrawl（如果配置了） | 免费额度内 | 免费额度内 | +$16 |
+| **每月，每天 1 次** | **~$2** | **~$5** | **~$19** |
+| **每月，每天 2 次**（GitHub 默认） | **~$6** | **~$20** | **~$48** |
+| **每月，每天 3 次**（Trigger.dev 默认） | **~$13** | **~$35** | **~$77** |
+| 另加 X（如果配置了，每天只搜一次） | +$4 | +$8 | +$23 |
+| 另加 Firecrawl（如果配置了） | 免费额度内 | 每天 2 次以内免费 | +$16 |
 
-每月合计已经减去 Exa 每月送的 $10。`large` 档加上所有服务，就是这个项目以前的默认配置：每月大约 **$110–130**，大头是 Exa。不设置 `SCOUT_BUDGET` 仍然等于 `large`，所以已有的部署行为不变。
+每月合计已经减去 Exa 每月送的 $10。`large` 档每天 3 次、再开上 X 和 Firecrawl，就是这个项目以前的默认配置：每月大约 **$110–130**，大头是 Exa。不设置 `SCOUT_BUDGET` 仍然等于 `large`，所以已有的部署行为不变。每周一次的漏检回顾每周只多花几美分。
 
 估算方法：一次 Exa 搜索取 12 条结果并带 highlights（$0.007 基础费 + 超过 10 条的 2 条 $0.002 + highlights $0.012）。LLM 读一个活动页面约输入 5,000 token、输出 500；打分一次约输入 3,000、输出 400。以上都按档位上限计算，实际扫描通常更便宜。
 
 ### 选哪个 LLM
 
-下表是最贵设置（`large`、每天 3 次）下每月的 LLM 费用。`small` 每天 1 次的话，大约除以 8。
+下表是最贵设置（`large`、每天 3 次）下每月的 LLM 费用。GitHub 默认配置（`small`、每天 2 次）大约除以 4。
 
 | `LLM_PROVIDER`（默认模型） | 每次 `large` 扫描 | 每月 | 说明 |
 | --- | ---: | ---: | --- |
@@ -61,9 +61,10 @@
 
 | 方式 | 费用 | 适合 |
 | --- | --- | --- |
-| [GitHub Actions](github-actions.zh-CN.md) | 免费。私有仓库每月有 2,000 分钟免费额度，一次扫描约用 5–15 分钟。 | 每天收到 Telegram 推送，什么都不用装。 |
-| 你自己的电脑 | 免费 | 先试试、偶尔扫一次、在 `localhost` 看 dashboard。 |
-| [Trigger.dev](operations.md#triggerdev) + Postgres + [Railway](admin-railway-deploy.md) | Trigger.dev 免费套餐够用（扫描只用掉每月 $5 额度里的 $1–2）；Neon Postgres 有免费档；Railway 常驻 dashboard 每月约 $5–25。 | 团队共用一个线上 dashboard。 |
+| [GitHub Actions](github-actions.zh-CN.md) | 免费。私有仓库每月有 2,000 分钟免费额度，每天扫两次大约用掉 300–900 分钟。 | 每天收到 Telegram 推送，什么都不用装。 |
+| 你自己的电脑（`npm start`） | 免费 | 用 dashboard、偶尔扫一次、先试试。 |
+| GitHub Actions + 免费的 [Neon](https://neon.com) 数据库 + `npm start` | 免费 | 云端扫描，在自己电脑上看 dashboard（[方法](github-actions.zh-CN.md#在-dashboard-里看结果可选)）。 |
+| [Trigger.dev](operations.md#triggerdev) + Postgres + [Railway](admin-railway-deploy.md) | Trigger.dev 免费套餐够用（扫描只用掉每月 $5 额度里的 $1–2）；Neon 有免费档；Railway 常驻 dashboard 每月约 $5–25。 | 团队共用一个线上 dashboard。 |
 
 ## 逐项配置
 
@@ -126,7 +127,7 @@ scout 只用 recent search，每天一次，上限由 `MAX_X_POSTS_PER_DAY`（�
 ## 省钱方法
 
 - 选小一档的 `SCOUT_BUDGET`，或者单独调低某个 `MAX_*`（`.env.example` 里有完整列表）。
-- 少扫几次。GitHub Actions 改 `.github/workflows/scout.yml` 里的 `cron` 行；Trigger.dev 从 `SCAN_SCHEDULES` 里删掉时间点。
+- 少扫几次。GitHub Actions 把 `SCANS_PER_DAY` 设成 `1`；Trigger.dev 从 `SCAN_SCHEDULES` 里删掉时间点。
 - 不用 X 和 Firecrawl，这是最容易省掉的两项。
 - 每家都用预充值，最多只会花掉你充进去的钱。
 - 运行 `pnpm scout:doctor`，**Budget** 这一行会显示一次扫描最多用多少。

@@ -68,7 +68,7 @@ const FLAG_SPEC = {
   root: "string"
 } as const;
 
-const SECRET_KEYS = new Set(["LLM_API_KEY", "EXA_API_KEY", "X_BEARER_TOKEN", "FIRECRAWL_API_KEY", "TELEGRAM_BOT_TOKEN"]);
+const SECRET_KEYS = new Set(["LLM_API_KEY", "EXA_API_KEY", "X_BEARER_TOKEN", "FIRECRAWL_API_KEY", "TELEGRAM_BOT_TOKEN", "DATABASE_URL"]);
 
 const FALLBACK_ENV_TEMPLATE = [
   "# Created by `pnpm onboard`. See .env.example for the full list of variables.",
@@ -145,6 +145,7 @@ async function main(): Promise<void> {
     await configureLlm({ io, flags, nonInteractive, existingValues, updates });
     await configureDiscovery({ io, nonInteractive, existingValues, updates });
     await configureTelegram({ io, nonInteractive, existingValues, updates });
+    await configureCloudResults({ io, nonInteractive, existingValues, updates });
     await configurePreferences({ io, flags, nonInteractive, root, existingValues, updates });
     await configureBudget({ io, flags, nonInteractive, existingEnvFile: existingEnvContent !== undefined, existingValues, updates });
     await finalizeMode({ io, nonInteractive, existingValues, updates });
@@ -464,6 +465,30 @@ async function pickTelegramChat(io: Io, botToken: string, botUsername: string): 
     if (choice) return choice.id;
     console.log("  That is not one of the numbers above.");
   }
+}
+
+/**
+ * For people whose scans run in the cloud (GitHub Actions or Trigger.dev) and save to Postgres:
+ * the same DATABASE_URL here makes the local dashboard show those results.
+ */
+async function configureCloudResults(input: {
+  io: Io;
+  nonInteractive: boolean;
+  existingValues: NodeJS.ProcessEnv;
+  updates: Record<string, string>;
+}): Promise<void> {
+  if (input.nonInteractive) return;
+  const { io, existingValues, updates } = input;
+  console.log("Cloud results (optional). Skip this unless your scans also run in the cloud (GitHub Actions or");
+  console.log("Trigger.dev) and save to a Postgres database; paste that same DATABASE_URL to see those results here.\n");
+  const databaseUrl = await promptOptionalSecret(
+    io,
+    "DATABASE_URL",
+    existingValues.DATABASE_URL,
+    "Postgres connection string, e.g. postgresql://user:password@host/db?sslmode=require"
+  );
+  if (databaseUrl !== undefined) updates.DATABASE_URL = databaseUrl;
+  console.log();
 }
 
 // ---------------------------------------------------------------------------

@@ -273,14 +273,15 @@ function writeText(response: ServerResponse, statusCode: number, text: string): 
 }
 
 /**
- * `pnpm scout:real` saves to .scout-data/ even when .env.local still says MOCK_MODE=true (the
- * scout:real script overrides it for that one run), so a dashboard that only read MOCK_MODE would
- * keep showing sample events next to a folder full of real results. Unless MOCK_MODE is set for
- * this process itself, real local results win over sample data. Postgres setups are unchanged.
+ * The dashboard shows real results whenever there are some: a configured database (for example
+ * one that GitHub Actions or Trigger.dev scans write to), or the local results file that
+ * `pnpm scout:real` writes even when .env.local still says MOCK_MODE=true. Sample data is only for
+ * when there is nothing real to show, or when MOCK_MODE is set for this process itself.
  */
 function resolveDashboardEnv(): AppEnv {
   const loaded = loadRuntimeEnv();
-  if (!loaded.mockMode || process.env.MOCK_MODE !== undefined || loaded.databaseUrl) return loaded;
+  if (!loaded.mockMode || process.env.MOCK_MODE !== undefined) return loaded;
+  if (loaded.databaseUrl) return { ...loaded, mockMode: false };
   const localStore = join(resolveScoutDataDir(loaded.scoutDataDir), SCOUT_STORE_FILE_NAME);
   return existsSync(localStore) ? { ...loaded, mockMode: false } : loaded;
 }

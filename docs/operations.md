@@ -161,8 +161,11 @@ pnpm scout:debug:light
 
 Two ways to scan on a schedule:
 
-- **GitHub Actions** (free, nothing to host): `.github/workflows/scout.yml` scans once a day in your
-  own copy of the repository and keeps history in the Actions cache. See [github-actions.md](github-actions.md).
+- **GitHub Actions** (free, nothing to host): `.github/workflows/scout.yml` scans twice a day in
+  your own copy of the repository (`SCANS_PER_DAY` = 1, 2, or 3), runs the weekly miss hunt, and
+  keeps history in the Actions cache, or in Postgres when the `DATABASE_URL` secret is set (a local
+  `npm start` dashboard pointed at the same database then shows those results). See
+  [github-actions.md](github-actions.md).
 - **Trigger.dev** (for a hosted team setup, below).
 
 ## Trigger.dev

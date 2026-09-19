@@ -4,15 +4,23 @@ name: Scout
 
 on:
   schedule:
-    # Once a day at 16:17 UTC: 9:17 in San Francisco in summer, 8:17 in winter. Add more lines to
-    # scan more often (each scan costs money; see docs/setup-and-costs.md).
-    - cron: "17 16 * * *"
+    # Times are UTC; San Francisco is 7 hours behind in summer and 8 in winter. The SCANS_PER_DAY
+    # variable (1, 2, or 3; 2 if unset) picks how many of the three daily scans run. Keep these
+    # strings in sync with the job's `if:` below.
+    - cron: "17 16 * * *" # morning scan, 9:17 in summer: always runs
+    - cron: "17 1 * * *" # evening scan, 18:17 in summer: when SCANS_PER_DAY is 2 or 3
+    - cron: "17 20 * * *" # midday scan, 13:17 in summer: when SCANS_PER_DAY is 3
+    - cron: "47 1 * * 1" # Sunday evening in San Francisco: weekly look back for missed events
   workflow_dispatch:
     inputs:
-      sample_data:
-        description: "Use sample data instead of your API keys (a free test of the setup)"
-        type: boolean
-        default: false
+      task:
+        description: "What to run"
+        type: choice
+        options:
+          - scan
+          - sample scan (a free test that uses no keys)
+          - look back for missed events
+        default: scan
 
 permissions:
   contents: read
@@ -24,6 +32,14 @@ concurrency:
 jobs:
   scan:
     name: Find and score events
+    # Scheduled scans that SCANS_PER_DAY turns off are skipped before a runner starts, so they
+    # use no Actions minutes.
+    if: >-
+      github.event_name != 'schedule'
+      || github.event.schedule == '17 16 * * *'
+      || github.event.schedule == '47 1 * * 1'
+      || (github.event.schedule == '17 1 * * *' && contains(fromJSON('["2","3"]'), vars.SCANS_PER_DAY || '2'))
+      || (github.event.schedule == '17 20 * * *' && vars.SCANS_PER_DAY == '3')
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
@@ -39,14 +55,17 @@ jobs:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       LOG_FORMAT: pretty
     steps:
-      # Lists which settings this copy has (never their values) on the run's summary page. A run
-      # you start by hand fails when the LLM is missing; a scheduled one just skips.
+      # Works out what this run does, and lists which settings this copy has (never their values)
+      # on the run's summary page. A run you start by hand fails when the LLM is missing; a
+      # scheduled one just skips.
       - name: Check the setup
         id: setup
         env:
-          SAMPLE_DATA: ${{ inputs.sample_data && 'true' || 'false' }}
-          STARTED_BY_HAND: ${{ github.event_name == 'workflow_dispatch' && 'true' || 'false' }}
+          EVENT: ${{ github.event_name }}
+          SCHEDULE: ${{ github.event.schedule }}
+          TASK: ${{ inputs.task }}
           SCOUT_PROFILE_VARIABLE: ${{ vars.SCOUT_PROFILE }}
+          SCANS_PER_DAY: ${{ vars.SCANS_PER_DAY || '2' }}
         run: |
           status() { # value, what to say when it is missing
             if [ -n "$1" ]; then echo "✅ set"; else echo "$2"; fi
@@ -63,68 +82,106 @@ jobs:
             echo "| \`EXA_API_KEY\` | secret | $(status "$EXA_API_KEY" "⚠️ missing: no web search, fewer events") |"
             echo "| \`X_BEARER_TOKEN\` | secret | $(status "$X_BEARER_TOKEN" "– not set (optional)") |"
             echo "| \`FIRECRAWL_API_KEY\` | secret | $(status "$FIRECRAWL_API_KEY" "– not set (optional)") |"
+            echo "| \`DATABASE_URL\` | secret | $(status "$DATABASE_URL" "– not set (optional: history is kept in the Actions cache)") |"
             echo "| \`SCOUT_PROFILE\` | variable | ${SCOUT_PROFILE_VARIABLE:-– not set (your scout.profile.yaml, or the default)} |"
             echo "| \`SCOUT_BUDGET\` | variable | $SCOUT_BUDGET |"
+            echo "| \`SCANS_PER_DAY\` | variable | $SCANS_PER_DAY |"
             echo
             echo "Change these in **Settings → Secrets and variables → Actions** ([guide](https://github.com/Jerry-111/bay-area-event-scout/blob/main/docs/github-actions.md))."
             echo
           } >> "$GITHUB_STEP_SUMMARY"
 
-          if [ "$SAMPLE_DATA" = "true" ]; then
-            echo "Sample-data run: no API keys are used."
-            echo "mode=sample" >> "$GITHUB_OUTPUT"
-          elif [ -z "$LLM_PROVIDER" ] || [ -z "$LLM_API_KEY" ]; then
-            if [ "$STARTED_BY_HAND" = "true" ]; then
+          # What to run, and the scan's time of day (it shapes the searches; X is searched in the
+          # morning scan only).
+          task=scan
+          scan_time=09:00
+          case "$EVENT:$SCHEDULE:$TASK" in
+            "workflow_dispatch:"*":sample scan"*) task=sample ;;
+            "workflow_dispatch:"*":look back"*) task=lookback ;;
+            "schedule:47 1 * * 1:"*) task=lookback ;;
+            "schedule:17 1 * * *:"*) scan_time=18:00 ;;
+            "schedule:17 20 * * *:"*) scan_time=13:00 ;;
+          esac
+
+          if [ "$task" != "sample" ] && { [ -z "$LLM_PROVIDER" ] || [ -z "$LLM_API_KEY" ]; }; then
+            if [ "$EVENT" = "workflow_dispatch" ]; then
               echo "::error title=The LLM is not set up::Add the LLM_PROVIDER variable and the LLM_API_KEY secret in Settings → Secrets and variables → Actions. The run's summary page shows what is missing."
               exit 1
             fi
-            echo "::notice title=Scout is not set up yet::Add the LLM_PROVIDER variable and the LLM_API_KEY secret. Skipping this scan."
-            echo "mode=skip" >> "$GITHUB_OUTPUT"
-          else
-            if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -z "$TELEGRAM_CHAT_ID" ]; then
-              echo "::warning title=Telegram chat id missing::The digest only appears on this page until you add the TELEGRAM_CHAT_ID variable. Run the Telegram chat id workflow to find it."
-            fi
-            echo "mode=real" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Scout is not set up yet::Add the LLM_PROVIDER variable and the LLM_API_KEY secret. Skipping this run."
+            task=skip
+          fi
+          if [ "$task" = "scan" ] && [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "::warning title=Telegram chat id missing::The digest only appears on this page until you add the TELEGRAM_CHAT_ID variable. Run the Telegram chat id workflow to find it."
+          fi
+          if [ "$task" = "lookback" ] && [ -z "$EXA_API_KEY" ]; then
+            echo "::notice title=Weekly look back skipped::It searches the web for events the scans missed, which needs the EXA_API_KEY secret."
+            task=skip
           fi
 
+          storage=cache
+          if [ -n "$DATABASE_URL" ]; then storage=database; fi
+          {
+            echo "task=$task"
+            echo "scan_time=$scan_time"
+            echo "storage=$storage"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Check out your copy
-        if: steps.setup.outputs.mode != 'skip'
+        if: steps.setup.outputs.task != 'skip'
         uses: actions/checkout@v7
 
       - name: Set up pnpm
-        if: steps.setup.outputs.mode != 'skip'
+        if: steps.setup.outputs.task != 'skip'
         uses: pnpm/action-setup@v6
 
       - name: Set up Node.js
-        if: steps.setup.outputs.mode != 'skip'
+        if: steps.setup.outputs.task != 'skip'
         uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
 
       - name: Install
-        if: steps.setup.outputs.mode != 'skip'
+        if: steps.setup.outputs.task != 'skip'
         run: pnpm install --frozen-lockfile
 
-      # Past results live in the Actions cache between runs, so events are not recommended twice.
+      # Without a database, past results live in the Actions cache between runs, so an event is
+      # only recommended once.
       - name: Restore past results
-        if: steps.setup.outputs.mode == 'real'
+        if: (steps.setup.outputs.task == 'scan' || steps.setup.outputs.task == 'lookback') && steps.setup.outputs.storage == 'cache'
         uses: actions/cache/restore@v6
         with:
           path: .scout-data
           key: scout-data-${{ github.run_id }}
           restore-keys: scout-data-
 
+      # With DATABASE_URL, results go to your Postgres instead, so the dashboard (npm start on your
+      # computer, or a hosted one) shows them. Creating the tables is safe to repeat.
+      - name: Prepare your database
+        if: (steps.setup.outputs.task == 'scan' || steps.setup.outputs.task == 'lookback') && steps.setup.outputs.storage == 'database'
+        env:
+          MOCK_MODE: "false"
+        run: node packages/db/dist/migrate.js
+
       - name: Scan
-        if: steps.setup.outputs.mode != 'skip'
+        if: steps.setup.outputs.task == 'scan' || steps.setup.outputs.task == 'sample'
         env:
           # A preset picked with the SCOUT_PROFILE variable applies until you save your own
           # preferences (scout.profile.yaml, e.g. with the Preferences workflow).
           SCOUT_PROFILE: ${{ hashFiles('scout.profile.yaml') == '' && vars.SCOUT_PROFILE || '' }}
-        run: pnpm ${{ steps.setup.outputs.mode == 'sample' && 'scout:mock' || 'scout:real' }}
+          SCAN_SCHEDULES: ${{ steps.setup.outputs.scan_time }}
+        run: pnpm ${{ steps.setup.outputs.task == 'sample' && 'scout:mock' || 'scout:real' }}
+
+      - name: Look back for missed events
+        if: steps.setup.outputs.task == 'lookback'
+        env:
+          SCOUT_PROFILE: ${{ hashFiles('scout.profile.yaml') == '' && vars.SCOUT_PROFILE || '' }}
+          MOCK_MODE: "false"
+        run: node apps/worker/dist/jobs/run-miss-hunt.js
 
       - name: Save results for the next run
-        if: always() && steps.setup.outputs.mode == 'real'
+        if: always() && (steps.setup.outputs.task == 'scan' || steps.setup.outputs.task == 'lookback') && steps.setup.outputs.storage == 'cache'
         uses: actions/cache/save@v6
         with:
           path: .scout-data

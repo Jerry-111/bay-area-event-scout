@@ -18,31 +18,39 @@ preferences, and sends a short digest to Telegram, plus a dashboard your team ca
   or any OpenAI-compatible endpoint. See [LLM providers](docs/llm-providers.md).
 - **Explainable scores.** Every event gets a 0-100 score with a breakdown and a rationale that names
   which of your preferences moved it. See [scoring](docs/scoring.md).
-- **Cheap to run, and you choose the budget.** From about $2 a month; see
-  [setup and costs](docs/setup-and-costs.md).
+- **Cheap to run, and you choose the budget.** The default GitHub setup costs about $6 a month;
+  see [setup and costs](docs/setup-and-costs.md).
 
-## Pick how to use it
+## Which setup is for me?
 
-| | What you need | Good for |
-| --- | --- | --- |
-| **[Daily digest on GitHub](docs/github-actions.md)** | A GitHub account, an LLM key, and a Telegram bot. Nothing to install. | Most people. About 10 minutes of setup in the browser. |
-| **[On your computer](#on-your-computer)** | Node.js, then one command: `npm start` | The dashboard, trying it out, tinkering |
-| **[Hosted for a team](docs/operations.md)** | Trigger.dev, Postgres, and a Node host | A shared dashboard with scheduled scans |
+Pick one; you can switch or combine them later.
+
+- **"Just send me good events every day."** Use **[GitHub Actions](docs/github-actions.md)**. It
+  scans twice a day in the cloud (your computer can be off) and sends the picks to Telegram. It's
+  free to run, has nothing to install, and takes about 10 minutes of setup in the browser.
+- **"I want to browse, filter, and rate events in a dashboard."** Use
+  **[your computer](#on-your-computer)**: install Node.js, then run `npm start`. It scans when you
+  ask it to. To have the cloud do the scanning, add a free database to the GitHub setup and
+  [open its results here](docs/github-actions.md#see-your-results-in-a-dashboard-optional).
+- **"My team shares one dashboard online."** Use the **[hosted setup](docs/operations.md)**:
+  Trigger.dev scans three times a day, Postgres keeps the history, and the dashboard runs on a
+  server. It's the most setup, and suits someone comfortable with a terminal.
 
 ## What it costs
 
-Trying it with sample data is free. For real scans, you pay each provider directly, and a budget
-setting caps what one scan may use:
+Trying it with sample data is free. For real scans, you pay each provider directly. A budget
+setting caps what one scan may use, and you choose how many scans a day:
 
-| `SCOUT_BUDGET` | Per scan | Suggested pace | Per month |
-| --- | ---: | --- | ---: |
-| `small` | ~$0.25 | once a day | ~$2 |
-| `medium` | ~$0.50 | twice a day | ~$20 |
-| `large` | ~$1, plus X | three times a day | ~$80–130 |
+| `SCOUT_BUDGET` | Per scan | 1 scan a day | 2 a day (GitHub default) | 3 a day |
+| --- | ---: | ---: | ---: | ---: |
+| `small` (GitHub default) | ~$0.25 | ~$2/month | ~$6/month | ~$13/month |
+| `medium` | ~$0.50 | ~$5/month | ~$20/month | ~$35/month |
+| `large` | ~$1 | ~$19/month | ~$48/month | ~$77/month |
 
-Only an LLM key is required. Telegram (free) and Exa are recommended; X and Firecrawl are optional.
-[Setup and costs](docs/setup-and-costs.md) walks through getting each key, step by step, and
-compares LLM prices.
+X, if you add it, is searched once a day: about $4, $8, or $23 more a month for small, medium,
+or large. Only an LLM key is required. Telegram (free) and Exa are recommended; X and Firecrawl
+are optional. [Setup and costs](docs/setup-and-costs.md) walks through getting each key, step by
+step, and compares LLM prices.
 
 ## On your computer
 
@@ -149,8 +157,9 @@ Every field is explained in [docs/profiles.md](docs/profiles.md).
 
 ## Run it on a schedule
 
-- **Free and install-free:** [GitHub Actions](docs/github-actions.md) runs a scan every day in your
-  own private copy and sends the digest to Telegram.
+- **Free and install-free:** [GitHub Actions](docs/github-actions.md) scans twice a day (set
+  `SCANS_PER_DAY` for 1 or 3) in your own private copy, sends the digest to Telegram, and looks
+  back once a week for events the scans missed.
 - **For a team:** run the worker on [Trigger.dev](https://trigger.dev) (09:00, 14:00, and 22:00
   Pacific, plus a weekly look back for missed events). Store results in Postgres, and host the
   dashboard on Railway or any Node host with `ADMIN_PASSWORD` set. See [operations](docs/operations.md)
