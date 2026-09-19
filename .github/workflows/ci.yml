@@ -47,6 +47,9 @@ jobs:
 
   launcher:
     # What a newcomer does: only Node.js installed, then `npm start` (no pnpm set up beforehand).
+    # Public repositories only: there these runners are free, while private repositories (including
+    # private copies made from the template) pay 10x for macOS minutes and 2x for Windows.
+    if: ${{ !github.event.repository.private }}
     name: npm start on ${{ matrix.os }}
     strategy:
       fail-fast: false
