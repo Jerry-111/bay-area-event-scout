@@ -59,12 +59,11 @@
 
 ### 在哪里运行
 
-| 方式 | 费用 | 适合 |
-| --- | --- | --- |
-| [GitHub Actions](github-actions.zh-CN.md) | 免费。私有仓库每月有 2,000 分钟免费额度，每天扫两次大约用掉 300–900 分钟。 | 每天收到 Telegram 推送，什么都不用装。 |
-| 你自己的电脑（`npm start`） | 免费 | 用 dashboard、偶尔扫一次、先试试。 |
-| GitHub Actions + 免费的 [Neon](https://neon.com) 数据库 + `npm start` | 免费 | 云端扫描，在自己电脑上看 dashboard（[方法](github-actions.zh-CN.md#在-dashboard-里看结果可选)）。 |
-| [Trigger.dev](operations.md#triggerdev) + Postgres + [Railway](admin-railway-deploy.md) | Trigger.dev 免费套餐够用（扫描只用掉每月 $5 额度里的 $1–2）；Neon 有免费档；Railway 常驻 dashboard 每月约 $5–25。 | 团队共用一个线上 dashboard。 |
+| 用法 | 扫描 | Dashboard | 运行费用 |
+| --- | --- | --- | --- |
+| 1. 本地版（`npm start`） | 在你电脑上，你想扫的时候扫 | 在你电脑上 | 免费 |
+| 2. [云端版](github-actions.zh-CN.md) | GitHub Actions 每天两次。私有仓库每月有 2,000 分钟免费额度，每天扫两次大约用 300–900 分钟。 | 在你电脑上，读取一个免费的 [Neon](https://neon.com) 数据库（[方法](github-actions.zh-CN.md#6-你的-dashboard)） | 免费 |
+| 3. [团队版](operations.md#triggerdev) | Trigger.dev 每天三次，免费套餐够用（扫描只用掉每月 $5 额度里的 $1–2）。 | 部署在 [Railway](admin-railway-deploy.md) 或任何 Node 主机上，配合 Postgres（Neon 有免费档） | 托管费每月约 $5–25 |
 
 ## 逐项配置
 
@@ -95,7 +94,7 @@ key 放在哪里：在自己电脑上，配置时（`npm start`）会写进 `.en
 4. 获取 chat id（`TELEGRAM_CHAT_ID`），不用看任何 JSON：
    - 配置时（`npm start` 或 `pnpm onboard`）会在第 3 步之后自动帮你找到，还能发一条测试消息。
    - 或者运行 `pnpm telegram:chats`，列出给机器人发过消息的聊天。
-   - 用 GitHub Actions 的话，运行 **Telegram chat id** 工作流（[说明](github-actions.zh-CN.md#4-telegram-chat-id)）。
+   - 用 GitHub Actions 的话，运行 **Telegram chat id** 工作流（[说明](github-actions.zh-CN.md#5-telegram-chat-id)）。
 
 ### 3. Exa（推荐）
 
@@ -121,8 +120,8 @@ scout 只用 recent search，每天一次，上限由 `MAX_X_POSTS_PER_DAY`（�
 
 ### 6. 每天自动运行
 
-- **什么都不用装，免费：** [GitHub Actions](github-actions.zh-CN.md)。在你自己的私有仓库里定时扫描，结果推送到 Telegram。
-- **团队线上部署：** [Trigger.dev](https://trigger.dev) 负责定时扫描，Postgres（[Neon](https://neon.com) 有免费档）保存历史，dashboard 部署在 [Railway](https://railway.com) 或任何 Node 主机上。见 [operations](operations.md) 和 [admin deploy](admin-railway-deploy.md)。
+- **云端版（免费）：** [GitHub Actions](github-actions.zh-CN.md) 在你自己的私有仓库里每天扫描两次，结果推送到 Telegram；一个免费的 [Neon](https://neon.com) 数据库保存结果，供你电脑上的 dashboard 读取。
+- **团队版：** [Trigger.dev](https://trigger.dev) 负责定时扫描，Postgres 保存历史，dashboard 部署在 [Railway](https://railway.com) 或任何 Node 主机上。见 [operations](operations.md) 和 [admin deploy](admin-railway-deploy.md)。
 
 ## 省钱方法
 

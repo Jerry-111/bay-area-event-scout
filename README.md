@@ -21,20 +21,22 @@ preferences, and sends a short digest to Telegram, plus a dashboard your team ca
 - **Cheap to run, and you choose the budget.** The default GitHub setup costs about $6 a month;
   see [setup and costs](docs/setup-and-costs.md).
 
-## Which setup is for me?
+## Three ways to run it
 
-Pick one; you can switch or combine them later.
+| | Scans | Dashboard | Setup | Cost to run |
+| --- | --- | --- | --- | --- |
+| **1. Local** | On your computer, when you ask | On your computer | Install Node.js, run `npm start` | Free |
+| **2. Cloud** | On GitHub, twice a day, even when your computer is off | On your computer, reading a free database | About 15 minutes in the browser, plus Node.js for the dashboard | Free |
+| **3. Team** | On Trigger.dev, three times a day | On a server everyone can open | A terminal, and three services you deploy yourself | About $5–25 a month for the server |
 
-- **"Just send me good events every day."** Use **[GitHub Actions](docs/github-actions.md)**. It
-  scans twice a day in the cloud (your computer can be off) and sends the picks to Telegram. It's
-  free to run, has nothing to install, and takes about 10 minutes of setup in the browser.
-- **"I want to browse, filter, and rate events in a dashboard."** Use
-  **[your computer](#on-your-computer)**: install Node.js, then run `npm start`. It scans when you
-  ask it to. To have the cloud do the scanning, add a free database to the GitHub setup and
-  [open its results here](docs/github-actions.md#see-your-results-in-a-dashboard-optional).
-- **"My team shares one dashboard online."** Use the **[hosted setup](docs/operations.md)**:
-  Trigger.dev scans three times a day, Postgres keeps the history, and the dashboard runs on a
-  server. It's the most setup, and suits someone comfortable with a terminal.
+1. **[Local](#on-your-computer)**: the quickest way to try it, and all you need for occasional scans.
+2. **[Cloud](docs/github-actions.md)**: for most people who want the picks every day. Scans run on
+   GitHub Actions and send the digest to Telegram. Results go to a free [Neon](https://neon.com)
+   database, which the dashboard on your computer reads.
+3. **[Team](docs/operations.md)**: for a team sharing one online dashboard. Trigger.dev runs the
+   scans, Postgres keeps the history, and you host the dashboard (Railway or any Node host).
+
+All three send the digest to Telegram if you set up a bot.
 
 ## What it costs
 
@@ -157,13 +159,13 @@ Every field is explained in [docs/profiles.md](docs/profiles.md).
 
 ## Run it on a schedule
 
-- **Free and install-free:** [GitHub Actions](docs/github-actions.md) scans twice a day (set
-  `SCANS_PER_DAY` for 1 or 3) in your own private copy, sends the digest to Telegram, and looks
-  back once a week for events the scans missed.
-- **For a team:** run the worker on [Trigger.dev](https://trigger.dev) (09:00, 14:00, and 22:00
-  Pacific, plus a weekly look back for missed events). Store results in Postgres, and host the
-  dashboard on Railway or any Node host with `ADMIN_PASSWORD` set. See [operations](docs/operations.md)
-  and [admin deploy](docs/admin-railway-deploy.md).
+- **Cloud (free):** [GitHub Actions](docs/github-actions.md) scans twice a day in your own private
+  copy (set `SCANS_PER_DAY` for 1 or 3), sends the digest to Telegram, and looks back once a week
+  for events the scans missed.
+- **Team:** run the worker on [Trigger.dev](https://trigger.dev) (09:00, 14:00, and 22:00 Pacific,
+  plus the weekly look back). Store results in Postgres, and host the dashboard on Railway or any
+  Node host with `ADMIN_PASSWORD` set. See [operations](docs/operations.md) and
+  [admin deploy](docs/admin-railway-deploy.md).
 
 ## How it works
 

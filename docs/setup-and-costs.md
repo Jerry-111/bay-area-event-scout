@@ -74,12 +74,11 @@ deepseek-flash about $0.15 / $0.60 off-peak.
 
 ### Where it runs
 
-| Option | Cost | Good for |
-| --- | --- | --- |
-| [GitHub Actions](github-actions.md) | Free. Private copies get 2,000 free minutes a month; two scans a day use about 300–900 of them. | A daily Telegram digest with nothing to install. |
-| Your computer (`npm start`) | Free | The dashboard, occasional scans, trying it out. |
-| GitHub Actions + a free [Neon](https://neon.com) database + `npm start` | Free | Scans in the cloud, dashboard on your computer ([how](github-actions.md#see-your-results-in-a-dashboard-optional)). |
-| [Trigger.dev](operations.md#triggerdev) + Postgres + [Railway](admin-railway-deploy.md) | Trigger.dev's free plan covers the scans (about $1–2 of its $5 monthly credit); Neon has a free tier; Railway is about $5–25 a month for an always-on dashboard. | Teams sharing a hosted dashboard. |
+| Setup | Scans | Dashboard | Cost to run |
+| --- | --- | --- | --- |
+| 1. Local (`npm start`) | On your computer, when you ask | On your computer | Free |
+| 2. [Cloud](github-actions.md) | GitHub Actions, twice a day. Private copies get 2,000 free minutes a month; two scans a day use about 300–900. | On your computer, reading a free [Neon](https://neon.com) database ([how](github-actions.md#6-your-dashboard)) | Free |
+| 3. [Team](operations.md#triggerdev) | Trigger.dev, three times a day. Its free plan covers the scans (about $1–2 of its $5 monthly credit). | Hosted on [Railway](admin-railway-deploy.md) or any Node host, with Postgres (Neon has a free tier) | About $5–25 a month for the host |
 
 ## Setting up each piece
 
@@ -125,7 +124,7 @@ Other providers ([all options](llm-providers.md)):
 4. Get the chat id (`TELEGRAM_CHAT_ID`) without reading any JSON:
    - Setup (`npm start`, or `pnpm onboard`) finds it for you after step 3, and can send a test message.
    - Or run `pnpm telegram:chats`, which lists the chats that messaged your bot.
-   - With GitHub Actions, run the **Telegram chat id** workflow ([guide](github-actions.md#4-telegram-chat-id)).
+   - With GitHub Actions, run the **Telegram chat id** workflow ([guide](github-actions.md#5-telegram-chat-id)).
 
 ### 3. Exa (recommended)
 
@@ -159,12 +158,12 @@ which works for most event pages.
 
 ### 6. Running it every day
 
-- **No install, free:** [GitHub Actions](github-actions.md). Scans run in your own private copy of
-  this repository, and the digest arrives on Telegram.
-- **Hosted, for teams:** [Trigger.dev](https://trigger.dev) runs the scans, Postgres
-  ([Neon](https://neon.com) has a free tier) keeps history, and the dashboard runs on
-  [Railway](https://railway.com) or any Node host. See [operations](operations.md) and
-  [admin deploy](admin-railway-deploy.md).
+- **Cloud setup (free):** [GitHub Actions](github-actions.md) scans twice a day in your own private
+  copy of this repository and sends the digest to Telegram. A free [Neon](https://neon.com) database
+  keeps the results for the dashboard on your computer.
+- **Team setup:** [Trigger.dev](https://trigger.dev) runs the scans, Postgres keeps the history, and
+  the dashboard runs on [Railway](https://railway.com) or any Node host. See [operations](operations.md)
+  and [admin deploy](admin-railway-deploy.md).
 
 ## Keeping the bill down
 

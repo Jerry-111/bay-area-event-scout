@@ -82,7 +82,7 @@ jobs:
             echo "| \`EXA_API_KEY\` | secret | $(status "$EXA_API_KEY" "⚠️ missing: no web search, fewer events") |"
             echo "| \`X_BEARER_TOKEN\` | secret | $(status "$X_BEARER_TOKEN" "– not set (optional)") |"
             echo "| \`FIRECRAWL_API_KEY\` | secret | $(status "$FIRECRAWL_API_KEY" "– not set (optional)") |"
-            echo "| \`DATABASE_URL\` | secret | $(status "$DATABASE_URL" "– not set (optional: history is kept in the Actions cache)") |"
+            echo "| \`DATABASE_URL\` | secret | $(status "$DATABASE_URL" "⚠️ missing: no dashboard (history is kept in the Actions cache)") |"
             echo "| \`SCOUT_PROFILE\` | variable | ${SCOUT_PROFILE_VARIABLE:-– not set (your scout.profile.yaml, or the default)} |"
             echo "| \`SCOUT_BUDGET\` | variable | $SCOUT_BUDGET |"
             echo "| \`SCANS_PER_DAY\` | variable | $SCANS_PER_DAY |"

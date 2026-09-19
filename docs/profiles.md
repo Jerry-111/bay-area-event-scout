@@ -52,7 +52,7 @@ pnpm profile:undo                                   # back to the previous versi
   `scout.profile.yaml` and switches off `SCOUT_PROFILE` in `.env.local`, so your version is used.
 - The previous version is kept as `scout.profile.yaml.bak`, which is what `profile:undo` restores.
 - `--yes` skips the confirmation, for scripts. With GitHub Actions, the **Preferences** workflow
-  does the same from the browser ([guide](github-actions.md#5-your-preferences)).
+  does the same from the browser ([guide](github-actions.md#7-your-preferences)).
 
 `pnpm onboard` offers presets, "describe yourself", and "change the current preferences" as part of
 the guided setup. To edit by hand instead, copy a preset and change it:

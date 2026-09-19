@@ -10,13 +10,19 @@
 - **打分可解释。** 每个活动都有 0-100 分、分项明细，以及说明是哪条偏好影响了分数的理由。详见 [scoring](docs/scoring.md)。
 - **运行成本低，预算自己定。** 默认的 GitHub 配置每月约 $6，见[配置与费用](docs/setup-and-costs.zh-CN.md)。
 
-## 我该选哪种？
+## 三种用法
 
-三选一，之后也可以换，或者组合起来用。
+| | 扫描 | Dashboard | 配置 | 运行费用 |
+| --- | --- | --- | --- | --- |
+| **1. 本地版** | 在你电脑上，你想扫的时候扫 | 在你电脑上 | 装 Node.js，运行 `npm start` | 免费 |
+| **2. 云端版** | 在 GitHub 上每天自动扫两次，电脑关着也行 | 在你电脑上，读取一个免费数据库 | 在浏览器里大约 15 分钟，另外为 dashboard 装一次 Node.js | 免费 |
+| **3. 团队版** | 在 Trigger.dev 上每天扫三次 | 部署在服务器上，大家都能打开 | 需要用终端，自己部署三个服务 | 服务器每月约 $5–25 |
 
-- **"每天给我推送好活动就行。"** 用 **[GitHub Actions](docs/github-actions.zh-CN.md)**：每天在云端扫描两次（电脑关着也没关系），精选活动推送到 Telegram。运行免费，不用装任何东西，在浏览器里大约 10 分钟配置完。
-- **"我想在 dashboard 里浏览、筛选、给活动打分。"** 用 **[自己的电脑](#在自己电脑上运行)**：装好 Node.js，运行 `npm start`，你想扫的时候才扫。也可以让云端负责扫描：在 GitHub 那套里加一个免费数据库，然后[在这里看它的结果](docs/github-actions.zh-CN.md#在-dashboard-里看结果可选)。
-- **"团队要共用一个线上 dashboard。"** 用 **[线上部署](docs/operations.md)**：Trigger.dev 每天扫描三次，Postgres 保存历史，dashboard 部署在服务器上。配置最多，适合会用终端的人。
+1. **[本地版](#在自己电脑上运行)**：最快的试用方式，偶尔扫一扫也完全够用。
+2. **[云端版](docs/github-actions.zh-CN.md)**：适合大多数想每天收到推荐的人。扫描在 GitHub Actions 上跑，结果推送到 Telegram，同时存进一个免费的 [Neon](https://neon.com) 数据库，你电脑上的 dashboard 读取它。
+3. **[团队版](docs/operations.md)**：适合团队共用一个线上 dashboard。Trigger.dev 负责扫描，Postgres 保存历史，dashboard 自己部署（Railway 或任何 Node 主机）。
+
+三种用法只要配置了机器人，都会把推荐推送到 Telegram。
 
 ## 要花多少钱
 
@@ -91,8 +97,8 @@ thresholds:
 
 ## 定时运行
 
-- **免费、不用安装：** [GitHub Actions](docs/github-actions.zh-CN.md) 在你自己的私有仓库里每天扫描两次（设置 `SCANS_PER_DAY` 可改成 1 或 3 次），结果推送到 Telegram，每周还会回头找一次漏掉的活动。
-- **团队使用：** 把 worker 部署到 [Trigger.dev](https://trigger.dev)（太平洋时间每天 09:00、14:00、22:00 扫描，外加每周一次的漏检回顾），结果存进 Postgres，dashboard 部署到 Railway 或任何 Node 主机（记得设置 `ADMIN_PASSWORD`）。详见 [operations](docs/operations.md) 和 [admin deploy](docs/admin-railway-deploy.md)。
+- **云端版（免费）：** [GitHub Actions](docs/github-actions.zh-CN.md) 在你自己的私有仓库里每天扫描两次（设置 `SCANS_PER_DAY` 可改成 1 或 3 次），结果推送到 Telegram，每周还会回头找一次漏掉的活动。
+- **团队版：** 把 worker 部署到 [Trigger.dev](https://trigger.dev)（太平洋时间每天 09:00、14:00、22:00 扫描，外加每周一次的漏检回顾），结果存进 Postgres，dashboard 部署到 Railway 或任何 Node 主机（记得设置 `ADMIN_PASSWORD`）。详见 [operations](docs/operations.md) 和 [admin deploy](docs/admin-railway-deploy.md)。
 
 ## 常用命令
 

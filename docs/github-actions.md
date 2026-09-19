@@ -1,16 +1,21 @@
-# Run it every day on GitHub (no install)
+# Cloud setup: daily scans on GitHub, dashboard on your computer
 
 English | [中文](github-actions.zh-CN.md)
 
-This is the easiest way to get a daily digest: the scout runs twice a day in your own private copy
-of this repository on GitHub's servers, and the picks arrive on Telegram. Your computer can be off.
-There is nothing to install and no server to keep running, and it is all done in the browser. It
-takes about 10 minutes.
+In this setup the scout scans twice a day on GitHub's servers, even when your computer is off, and
+sends the picks to Telegram. Results are saved in a free database, and the dashboard on your
+computer reads them whenever you open it. Setting it up takes about 15 minutes in the browser,
+plus installing Node.js once for the dashboard.
 
-You need a free [GitHub account](https://github.com/signup), an LLM key, and a Telegram bot. Exa is
-recommended too. [Setup and costs](setup-and-costs.md) says where to get each one and what it costs.
-GitHub itself is free here: private repositories get 2,000 Actions minutes a month, and a scan uses
-about 5–15.
+You need:
+
+- a free [GitHub account](https://github.com/signup);
+- an LLM key and a Telegram bot, plus an Exa key, which is recommended;
+- a free database from [Neon](https://neon.com).
+
+[Setup and costs](setup-and-costs.md) says where to get each key and what it costs. GitHub and
+Neon are free here. Private repositories get 2,000 Actions minutes a month, and two scans a day
+use about 300–900 of them.
 
 ## 1. Make your own copy
 
@@ -18,23 +23,34 @@ about 5–15.
    and click **Use this template → Create a new repository**.
 2. Pick a name (for example `my-event-scout`), choose **Private**, and click **Create repository**.
 
-Everything below happens in your new copy.
+Everything below happens in your new copy. If the scout is useful to you, a star on the original
+repository helps other people find it.
 
-## 2. Add your keys
+## 2. Create a free database
+
+1. Sign up at [neon.com](https://neon.com). The free plan needs no card.
+2. Create a project (any name, and the region closest to you).
+3. Click **Connect** and copy the connection string. It starts with `postgresql://` and contains a
+   password, so treat it like a key.
+
+The scans save their results here, and your dashboard reads them. You can skip this step; you then
+get the Telegram digest and the run pages, but no dashboard.
+
+## 3. Add your keys
 
 In your copy, open **Settings → Secrets and variables → Actions**.
 
-On the **Secrets** tab, click **New repository secret** for each key you have. Secrets are
-encrypted and never shown in logs.
+On the **Secrets** tab, click **New repository secret** for each of these. Secrets are encrypted
+and never shown in logs.
 
 | Name | Needed? | Value |
 | --- | --- | --- |
 | `LLM_API_KEY` | Required | Your LLM key |
+| `DATABASE_URL` | Recommended | The Neon connection string from step 2 |
 | `TELEGRAM_BOT_TOKEN` | Recommended | The token from @BotFather |
 | `EXA_API_KEY` | Recommended | Your Exa key |
 | `X_BEARER_TOKEN` | Optional | Your X API bearer token |
 | `FIRECRAWL_API_KEY` | Optional | Your Firecrawl key |
-| `DATABASE_URL` | Optional | Only for a dashboard; see [below](#see-your-results-in-a-dashboard-optional) |
 
 On the **Variables** tab, click **New repository variable** for these settings:
 
@@ -42,12 +58,12 @@ On the **Variables** tab, click **New repository variable** for these settings:
 | --- | --- | --- |
 | `LLM_PROVIDER` | Required | `openai`, `gemini`, `anthropic`, `deepseek`, `dashscope-intl`, `dashscope`, or `openrouter` |
 | `SCOUT_PROFILE` | Optional | A starting point for your preferences: `b2b-saas-founder`, `climate-tech`, `fintech`, or `consumer-ai-founder` (the default) |
-| `SCANS_PER_DAY` | Optional | `1`, `2` (the default), or `3`; see [step 6](#6-schedule) |
+| `SCANS_PER_DAY` | Optional | `1`, `2` (the default), or `3`; see [step 8](#8-schedule) |
 | `SCOUT_BUDGET` | Optional | `small` (the default here), `medium`, or `large`; see [costs](setup-and-costs.md#what-it-costs) |
 | `LLM_MODEL` | Optional | A different model from your provider |
-| `TELEGRAM_CHAT_ID` | Add in step 4 | Where the digest goes |
+| `TELEGRAM_CHAT_ID` | Add in step 5 | Where the digest goes |
 
-## 3. Try it
+## 4. Try it
 
 1. Open the **Actions** tab. If GitHub asks, click **I understand my workflows, go ahead and enable them**.
 2. Click **Scout** on the left, then **Run workflow**. Under **What to run**, pick
@@ -55,20 +71,39 @@ On the **Variables** tab, click **New repository variable** for these settings:
 3. When the run finishes (a minute or two), open it. The summary page starts with a **Setup check**
    table (which keys your copy has, never their values), followed by a sample digest.
 4. Run **Scout** again with **scan** for your first real scan. Its digest shows up on the run's
-   summary page, and on Telegram once step 4 is done.
+   summary page, and on Telegram once step 5 is done.
 
-## 4. Telegram chat id
+## 5. Telegram chat id
 
 1. In Telegram, open your bot and press **Start** (for a group, add the bot to the group and post a
    message there).
 2. In **Actions**, run **Telegram chat id**. Its summary page lists the chats that messaged your bot,
    with their ids.
-3. Add the id as the `TELEGRAM_CHAT_ID` variable (step 2).
+3. Add the id as the `TELEGRAM_CHAT_ID` variable (step 3).
 
-## 5. Your preferences
+## 6. Your dashboard
+
+The dashboard is a small website that runs on your computer while you use it.
+
+1. Install **Node.js 22 or newer** once: download the LTS installer from
+   [nodejs.org](https://nodejs.org/en/download) and run it.
+2. On your copy's GitHub page, click **Code → Download ZIP** and unzip it. If you use git, clone
+   your copy instead.
+3. Open a terminal in that folder. On a Mac: open Terminal, type `cd ` (with a space), drag the
+   folder onto the window, and press Enter. On Windows: open the folder, click its address bar,
+   type `cmd`, and press Enter.
+4. Run `npm start`. Setup asks a few questions; press Enter to skip the LLM and search keys, since
+   the scans run on GitHub. When it asks about **Cloud results**, paste the Neon connection string
+   from step 2. Then choose **Open the dashboard**.
+
+From then on, run `npm start` whenever you want to look. The dashboard opens in your browser with
+the latest results from GitHub's scans. Press Ctrl+C in the terminal when you're done.
+
+## 7. Your preferences
 
 Preferences decide what gets searched for, what gets skipped, and how events are scored. They live in
-`scout.profile.yaml` in your copy. You can change them without editing that file:
+`scout.profile.yaml` in your copy on GitHub, and that is the version the scans use. You can change
+them without editing that file:
 
 1. In **Actions**, open **Preferences** and click **Run workflow**.
 2. Pick what to do:
@@ -83,15 +118,16 @@ Preferences decide what gets searched for, what gets skipped, and how events are
 
 Your LLM makes the change. The result is checked against the profile rules before it is saved, and
 your `sources` section is never touched. If you like editing files, the pencil icon on
-`scout.profile.yaml` works too; [profiles](profiles.md) explains every field.
+`scout.profile.yaml` works too; [profiles](profiles.md) explains every field. Make changes on
+GitHub rather than on your computer: the local copy only runs the dashboard.
 
-## 6. Schedule
+## 8. Schedule
 
 The scout scans twice a day by default: around 9:17 in the morning and 18:17 in the evening, San
 Francisco time (an hour earlier in winter, since GitHub schedules run on UTC). The morning scan
 also searches X. The two scans use different searches, so the evening one is not a repeat.
 
-To change how often it scans, set the `SCANS_PER_DAY` variable (step 2):
+To change how often it scans, set the `SCANS_PER_DAY` variable (step 3):
 
 | `SCANS_PER_DAY` | Scans |
 | --- | --- |
@@ -109,23 +145,11 @@ the daily scans missed, and lists them on that run's summary page with the reaso
 calendar it does not read yet). It needs the Exa key. To run it now: **Run workflow → look back for
 missed events**.
 
-## See your results in a dashboard (optional)
-
-GitHub Actions has no dashboard; the digest is the output. To also browse and rate events in the
-dashboard, have the scans save to a free database, and open the dashboard on your computer:
-
-1. Create a free Postgres database at [neon.com](https://neon.com) and copy its connection string
-   (it starts with `postgresql://`).
-2. In your copy, add it as the `DATABASE_URL` secret (step 2). From the next scan on, results are
-   saved there instead of the Actions cache.
-3. On your computer, get the scout and run `npm start` (see the [README](../README.md#on-your-computer)).
-   When setup asks about **Cloud results**, paste the same connection string, then choose
-   **Open the dashboard**.
-
 ## Good to know
 
-- **Past results:** each scan keeps its history, so an event is only recommended once. Without a
-  database it lives in the Actions cache; deleting the caches (**Actions → Caches**) starts fresh.
+- **Past results:** each scan keeps its history, so an event is only recommended once. With the
+  database it lives there; without it, in the Actions cache (deleting the caches under
+  **Actions → Caches** starts fresh).
 - **Updates:** a copy made from a template does not update itself. To pick up a new version, make a
   new copy and add your secrets again, or merge from this repository with git.
 - **Turning it off:** in **Actions**, open **Scout**, click **…**, and choose **Disable workflow**.
