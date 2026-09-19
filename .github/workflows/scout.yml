@@ -24,7 +24,7 @@ concurrency:
 jobs:
   scan:
     name: Find and score events
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
       SCOUT_BUDGET: ${{ vars.SCOUT_BUDGET || 'small' }}
@@ -39,32 +39,65 @@ jobs:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       LOG_FORMAT: pretty
     steps:
+      # Lists which settings this copy has (never their values) on the run's summary page. A run
+      # you start by hand fails when the LLM is missing; a scheduled one just skips.
       - name: Check the setup
         id: setup
         env:
           SAMPLE_DATA: ${{ inputs.sample_data && 'true' || 'false' }}
+          STARTED_BY_HAND: ${{ github.event_name == 'workflow_dispatch' && 'true' || 'false' }}
+          SCOUT_PROFILE_VARIABLE: ${{ vars.SCOUT_PROFILE }}
         run: |
+          status() { # value, what to say when it is missing
+            if [ -n "$1" ]; then echo "✅ set"; else echo "$2"; fi
+          }
+          {
+            echo "### Setup check"
+            echo
+            echo "| Setting | Where | Status |"
+            echo "| --- | --- | --- |"
+            echo "| \`LLM_PROVIDER\` | variable | $(status "$LLM_PROVIDER" "❌ missing (required)") |"
+            echo "| \`LLM_API_KEY\` | secret | $(status "$LLM_API_KEY" "❌ missing (required)") |"
+            echo "| \`TELEGRAM_BOT_TOKEN\` | secret | $(status "$TELEGRAM_BOT_TOKEN" "⚠️ missing: no Telegram digest") |"
+            echo "| \`TELEGRAM_CHAT_ID\` | variable | $(status "$TELEGRAM_CHAT_ID" "⚠️ missing: run the Telegram chat id workflow") |"
+            echo "| \`EXA_API_KEY\` | secret | $(status "$EXA_API_KEY" "⚠️ missing: no web search, fewer events") |"
+            echo "| \`X_BEARER_TOKEN\` | secret | $(status "$X_BEARER_TOKEN" "– not set (optional)") |"
+            echo "| \`FIRECRAWL_API_KEY\` | secret | $(status "$FIRECRAWL_API_KEY" "– not set (optional)") |"
+            echo "| \`SCOUT_PROFILE\` | variable | ${SCOUT_PROFILE_VARIABLE:-– not set (your scout.profile.yaml, or the default)} |"
+            echo "| \`SCOUT_BUDGET\` | variable | $SCOUT_BUDGET |"
+            echo
+            echo "Change these in **Settings → Secrets and variables → Actions** ([guide](https://github.com/Jerry-111/bay-area-event-scout/blob/main/docs/github-actions.md))."
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+
           if [ "$SAMPLE_DATA" = "true" ]; then
             echo "Sample-data run: no API keys are used."
             echo "mode=sample" >> "$GITHUB_OUTPUT"
           elif [ -z "$LLM_PROVIDER" ] || [ -z "$LLM_API_KEY" ]; then
-            echo "::notice title=Scout is not set up yet::Add the LLM_PROVIDER variable and the LLM_API_KEY secret (docs/github-actions.md). Skipping this scan."
+            if [ "$STARTED_BY_HAND" = "true" ]; then
+              echo "::error title=The LLM is not set up::Add the LLM_PROVIDER variable and the LLM_API_KEY secret in Settings → Secrets and variables → Actions. The run's summary page shows what is missing."
+              exit 1
+            fi
+            echo "::notice title=Scout is not set up yet::Add the LLM_PROVIDER variable and the LLM_API_KEY secret. Skipping this scan."
             echo "mode=skip" >> "$GITHUB_OUTPUT"
           else
+            if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -z "$TELEGRAM_CHAT_ID" ]; then
+              echo "::warning title=Telegram chat id missing::The digest only appears on this page until you add the TELEGRAM_CHAT_ID variable. Run the Telegram chat id workflow to find it."
+            fi
             echo "mode=real" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Check out your copy
         if: steps.setup.outputs.mode != 'skip'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up pnpm
         if: steps.setup.outputs.mode != 'skip'
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
 
       - name: Set up Node.js
         if: steps.setup.outputs.mode != 'skip'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -76,7 +109,7 @@ jobs:
       # Past results live in the Actions cache between runs, so events are not recommended twice.
       - name: Restore past results
         if: steps.setup.outputs.mode == 'real'
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: .scout-data
           key: scout-data-${{ github.run_id }}
@@ -92,7 +125,7 @@ jobs:
 
       - name: Save results for the next run
         if: always() && steps.setup.outputs.mode == 'real'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: .scout-data
           key: scout-data-${{ github.run_id }}-${{ github.run_attempt }}

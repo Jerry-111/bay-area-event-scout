@@ -30,7 +30,7 @@ concurrency:
 jobs:
   preferences:
     name: Preferences
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
       ACTION: ${{ inputs.action }}
@@ -42,15 +42,15 @@ jobs:
       LOG_FORMAT: pretty
     steps:
       - name: Check out your copy
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0 # "undo" looks back through the history of scout.profile.yaml
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -93,7 +93,11 @@ jobs:
             "start over from a description") command=(pnpm --silent profile:new --yes "$TEXT") ;;
           esac
           if [ "$ACTION" != "show my preferences" ] && [ -z "$TEXT" ]; then
-            echo "::error::Fill in the text box: what to change, or a description of yourself."
+            echo "::error title=Nothing to do::Fill in the text box: what to change, or a description of yourself."
+            exit 1
+          fi
+          if [ "$ACTION" != "show my preferences" ] && { [ -z "$LLM_PROVIDER" ] || [ -z "$LLM_API_KEY" ]; }; then
+            echo "::error title=The LLM is not set up::Changing preferences uses your LLM. Add the LLM_PROVIDER variable and the LLM_API_KEY secret in Settings → Secrets and variables → Actions."
             exit 1
           fi
           # Close the code block even when the command fails, then fail the step with its exit code.

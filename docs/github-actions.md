@@ -49,7 +49,8 @@ On the **Variables** tab, click **New repository variable** for these settings:
 1. Open the **Actions** tab. If GitHub asks, click **I understand my workflows, go ahead and enable them**.
 2. Click **Scout** on the left, then **Run workflow**. Tick **Use sample data** and click **Run workflow**.
    This free test checks the setup without using your keys.
-3. When the run finishes (a minute or two), open it. The summary page shows a sample digest.
+3. When the run finishes (a minute or two), open it. The summary page starts with a **Setup check**
+   table (which keys your copy has, never their values), followed by a sample digest.
 4. Run **Scout** again with the box unticked for your first real scan. Its digest shows up on the
    run's summary page, and on Telegram once step 4 is done.
 

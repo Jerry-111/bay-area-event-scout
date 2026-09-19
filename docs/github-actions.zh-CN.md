@@ -41,7 +41,7 @@
 
 1. 打开 **Actions** 标签页。如果 GitHub 提示，点 **I understand my workflows, go ahead and enable them**。
 2. 点左侧的 **Scout**，再点 **Run workflow**，勾选 **Use sample data**，点 **Run workflow**。这是一次免费测试，只检查配置，不会用到你的 key。
-3. 运行结束后（一两分钟）点进去，summary 页面会显示一份示例 digest。
+3. 运行结束后（一两分钟）点进去，summary 页面最上面是一张 **Setup check** 表（列出你的仓库配置了哪些 key，不会显示 key 的内容），下面是一份示例 digest。
 4. 不勾选再运行一次 **Scout**，就是第一次真实扫描。结果会显示在运行的 summary 页面上；完成第 4 步后也会推送到 Telegram。
 
 ## 4. Telegram chat id
