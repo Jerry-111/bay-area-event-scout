@@ -26,6 +26,7 @@ import { join, resolve } from "node:path";
 import { StringDecoder } from "node:string_decoder";
 import {
   booleanFlag,
+  commandHint,
   DEFAULT_PROFILE,
   DEFAULT_PROFILE_NAME,
   describeProfile,
@@ -130,7 +131,7 @@ async function main(): Promise<void> {
   console.log("Bay Area Event Scout — onboarding");
   console.log(
     "This asks a few questions about your LLM, search keys, Telegram, preferences, and budget, then\n" +
-      `writes ${join(root, ".env.local")} (and optionally scout.profile.yaml) so \`pnpm scout:real\` works.\n`
+      `writes ${join(root, ".env.local")} (and optionally scout.profile.yaml) so real scans work.\n`
   );
 
   const envLocalPath = join(root, ".env.local");
@@ -404,7 +405,7 @@ async function configureTelegram(input: {
     const rejected = /unauthorized|not found/i.test(reason);
     if (rejected && botToken !== undefined) delete updates.TELEGRAM_BOT_TOKEN;
     console.log(`  Telegram did not accept that token (${reason}).${rejected && botToken !== undefined ? " It was not saved." : ""}`);
-    console.log("  Check it in @BotFather (/mybots), then run `pnpm onboard` again.\n");
+    console.log(`  Check it in @BotFather (/mybots), then run \`${commandHint("onboard")}\` again.\n`);
     return;
   }
 
@@ -576,7 +577,7 @@ function llmForPreferences(existingValues: NodeJS.ProcessEnv, updates: Record<st
   if (env.llm.enabled) return env;
   console.log(
     `This option uses your LLM, which is not set up (${env.llm.disabledReason}). ` +
-      "Keeping the current preferences; you can run `pnpm profile:new` or `pnpm profile:edit` once an LLM is configured."
+      `Keeping the current preferences; you can run \`${commandHint("profile:edit")}\` once an LLM is configured.`
   );
   return undefined;
 }
@@ -705,7 +706,7 @@ function savePreferences(input: {
   const previousYaml = loaded ? readSelectionYaml(root, loaded) : undefined;
   saveProfileYaml({ root, plan: { ...plan, clearScoutProfileInEnvLocal: false }, yaml, previousYaml });
   if (plan.clearScoutProfileInEnvLocal || selection.selectedBy === "preset") updates.SCOUT_PROFILE = "";
-  console.log(`Saved to ${plan.targetPath} (the previous version is kept for \`pnpm profile:undo\`).`);
+  console.log(`Saved to ${plan.targetPath} (the previous version is kept for \`${commandHint("profile:undo")}\`).`);
   if (plan.scoutProfileSetElsewhere) {
     console.log(`Heads up: ${plan.scoutProfileSetElsewhere}, so scans keep using ${selection.source} until you remove it.`);
   }
@@ -812,7 +813,7 @@ async function finalizeMode(input: {
     console.log(realModeNote);
   } else {
     updates.MOCK_MODE = "true";
-    console.log("Keeping mock mode. Run `pnpm onboard` again anytime to switch to real mode.");
+    console.log(`Keeping mock mode. Run \`${commandHint("onboard")}\` again anytime to switch to real mode.`);
   }
 }
 
@@ -828,12 +829,14 @@ function readEnvExampleTemplate(root: string): string {
 function printSummary(envLocalPath: string, updates: Record<string, string>): void {
   console.log(`\nWrote ${envLocalPath}:`);
   for (const [key, value] of Object.entries(updates)) {
-    const display = value === "" ? "(cleared)" : SECRET_KEYS.has(key) ? maskSecret(value) : value;
+    const display = value === "" ? "(not set)" : SECRET_KEYS.has(key) ? maskSecret(value) : value;
     console.log(`  ${key}=${display}`);
   }
 }
 
 function printNextSteps(mockMode: boolean): void {
+  // `npm start` goes straight on to its menu (scan, dashboard, ...), so it needs no to-do list.
+  if (process.env.SCOUT_LAUNCHER === "npm-start") return;
   if (mockMode) {
     console.log(
       "\nNext steps:\n" +

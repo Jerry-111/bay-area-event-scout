@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { booleanFlag, CliFlagError, parseFlags, stringFlag } from "./cli-flags.js";
+import { booleanFlag, CliFlagError, commandHint, parseFlags, stringFlag } from "./cli-flags.js";
 
 const SPEC = { provider: "string", "api-key-env": "string", yes: "boolean", root: "string" } as const;
 
@@ -39,4 +39,12 @@ test("stringFlag and booleanFlag read out parsed values with the right type", ()
   assert.equal(stringFlag(flags, "root"), undefined);
   assert.equal(booleanFlag(flags, "yes"), true);
   assert.equal(booleanFlag(flags, "provider"), false);
+});
+
+test("commandHint suggests pnpm scripts, or npm start actions for people who came in through npm start", () => {
+  assert.equal(commandHint("onboard", undefined, {}), "pnpm onboard");
+  assert.equal(commandHint("profile:edit", '"add climate tech"', {}), 'pnpm profile:edit "add climate tech"');
+  assert.equal(commandHint("onboard", undefined, { SCOUT_LAUNCHER: "npm-start" }), "npm start setup");
+  assert.equal(commandHint("profile:undo", undefined, { SCOUT_LAUNCHER: "npm-start" }), "npm start undo");
+  assert.equal(commandHint("scout:mock", undefined, { SCOUT_LAUNCHER: "npm-start" }), "pnpm scout:mock");
 });

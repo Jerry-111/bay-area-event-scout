@@ -1,4 +1,5 @@
 import { dirname, relative, resolve, sep } from "node:path";
+import { commandHint } from "./cli-flags.js";
 import type { BudgetCaps } from "./index.js";
 import type { LlmConfig } from "./llm-config.js";
 import { describeLlm } from "./llm-config.js";
@@ -101,7 +102,7 @@ export function evaluateEnvFileSource(input: { envFilePath?: string; repoRoot?: 
     return {
       status: "ok",
       label: ".env.local",
-      detail: "none found; using process environment variables and defaults (run `pnpm onboard` to create one)"
+      detail: `none found; using process environment variables and defaults (run \`${commandHint("onboard")}\` to create one)`
     };
   }
 
@@ -114,7 +115,7 @@ export function evaluateEnvFileSource(input: { envFilePath?: string; repoRoot?: 
       label: ".env.local",
       detail:
         `loaded from ${shown}, not the repo root. Commands started from other folders (the worker, the ` +
-        "dashboard) may read a different .env.local. Move it to the repo root, where `pnpm onboard` writes it."
+        `dashboard) may read a different .env.local. Move it to the repo root, where \`${commandHint("onboard")}\` writes it.`
     };
   }
   if (input.repoRoot && fileDir !== resolve(input.repoRoot)) {
@@ -124,7 +125,7 @@ export function evaluateEnvFileSource(input: { envFilePath?: string; repoRoot?: 
       detail:
         `loaded from ${shown}, which is OUTSIDE this repo (${displayPath(input.repoRoot, undefined, input.homeDir)}). ` +
         "This happens with nested checkouts or git worktrees and can silently load someone else's " +
-        "settings or secrets. Create a .env.local in the repo root (`pnpm onboard`) if that is not what you intended."
+        `settings or secrets. Create a .env.local in the repo root (\`${commandHint("onboard")}\`) if that is not what you intended.`
     };
   }
 
@@ -167,7 +168,7 @@ export function evaluateLlm(llm: LlmConfig, mockMode: boolean): CheckResult {
     return {
       status: "skip",
       label: "LLM",
-      detail: `not configured (${llm.disabledReason ?? "no provider"}); mock mode does not call an LLM. Run \`pnpm onboard\` to add one.`
+      detail: `not configured (${llm.disabledReason ?? "no provider"}); mock mode does not call an LLM. Run \`${commandHint("onboard")}\` to add one.`
     };
   }
   return {
@@ -175,7 +176,7 @@ export function evaluateLlm(llm: LlmConfig, mockMode: boolean): CheckResult {
     label: "LLM",
     detail:
       `disabled — ${llm.disabledReason ?? "no provider configured"}; real scans cannot read event pages without one ` +
-      "(run `pnpm onboard`, or set LLM_PROVIDER and LLM_API_KEY)"
+      `(run \`${commandHint("onboard")}\`, or set LLM_PROVIDER and LLM_API_KEY)`
   };
 }
 

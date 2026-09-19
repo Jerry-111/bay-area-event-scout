@@ -23,6 +23,7 @@
   "type": "module",
   "scripts": {
     "postinstall": "tsc -b",
+    "start": "node scripts/start.mjs",
     "typecheck": "tsc -b && tsc -p scripts",
     "test": "pnpm typecheck && node --test packages/*/dist/*.test.js apps/worker/dist/jobs/*.test.js apps/admin/dist/views/*.test.js",
     "dev": "pnpm --filter @event-scout/worker dev",

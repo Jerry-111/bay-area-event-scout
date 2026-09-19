@@ -19,7 +19,7 @@
 
 ## 要花多少钱
 
-账单由两件事决定：每次扫描允许做多少事（`SCOUT_BUDGET`），以及每天扫几次。`pnpm onboard` 会问你选哪一档；GitHub Actions 默认用 `small`。
+账单由两件事决定：每次扫描允许做多少事（`SCOUT_BUDGET`），以及每天扫几次。配置时（`npm start` 或 `pnpm onboard`）会问你选哪一档；GitHub Actions 默认用 `small`。
 
 | | `small` | `medium` | `large` |
 | --- | ---: | ---: | ---: |
@@ -67,7 +67,7 @@
 
 ## 逐项配置
 
-key 放在哪里：`pnpm onboard` 会写进你电脑上的 `.env.local`（千万不要提交这个文件）。用 GitHub Actions 的话，放在你仓库的 **Settings → Secrets and variables → Actions**（[说明](github-actions.zh-CN.md)）。用 Trigger.dev 的话，放在项目的环境变量里。
+key 放在哪里：在自己电脑上，配置时（`npm start`）会写进 `.env.local`（千万不要提交这个文件）。用 GitHub Actions 的话，放在你仓库的 **Settings → Secrets and variables → Actions**（[说明](github-actions.zh-CN.md)）。用 Trigger.dev 的话，放在项目的环境变量里。
 
 ### 1. LLM key（必需）
 
@@ -92,7 +92,7 @@ key 放在哪里：`pnpm onboard` 会写进你电脑上的 `.env.local`（千万
 2. 起一个显示名，再起一个以 `bot` 结尾的用户名。BotFather 会回复一个形如 `123456789:AAH...` 的 token，这就是 `TELEGRAM_BOT_TOKEN`。
 3. 在 Telegram 里打开你的新机器人，点 **Start**（想推送到群里的话，把机器人拉进群，在群里发一条消息）。
 4. 获取 chat id（`TELEGRAM_CHAT_ID`），不用看任何 JSON：
-   - `pnpm onboard` 会在第 3 步之后自动帮你找到，还能发一条测试消息。
+   - 配置时（`npm start` 或 `pnpm onboard`）会在第 3 步之后自动帮你找到，还能发一条测试消息。
    - 或者运行 `pnpm telegram:chats`，列出给机器人发过消息的聊天。
    - 用 GitHub Actions 的话，运行 **Telegram chat id** 工作流（[说明](github-actions.zh-CN.md#4-telegram-chat-id)）。
 

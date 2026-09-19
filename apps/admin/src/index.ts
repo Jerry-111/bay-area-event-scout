@@ -129,7 +129,8 @@ server.listen(listenPort, listenHost, () => {
     mode: env.mockMode ? "mock" : "real",
     auth: hasAdminPassword() ? "password" : "disabled"
   });
-  console.log(`Admin UI: http://${listenHost}:${listenPort}`);
+  // `npm start` prints the address itself, with instructions.
+  if (process.env.SCOUT_LAUNCHER !== "npm-start") console.log(`Admin UI: http://${listenHost}:${listenPort}`);
 });
 
 function resolveListenPort(): number {

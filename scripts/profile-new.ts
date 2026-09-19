@@ -13,7 +13,7 @@
  */
 import { createInterface } from "node:readline/promises";
 import { resolve } from "node:path";
-import { booleanFlag, findRepoRoot, parseFlags, stringFlag } from "../packages/shared/src/index.js";
+import { booleanFlag, commandHint, findRepoRoot, parseFlags, stringFlag } from "../packages/shared/src/index.js";
 import { draftProfileYaml } from "../packages/intelligence/src/profile-draft.js";
 import { loadProfileContext, printProfile, saveNewProfileVersion } from "./profile-common.js";
 
@@ -37,7 +37,7 @@ async function main(): Promise<void> {
   if (!env.llm.enabled) {
     throw new Error(
       `Writing preferences from a description uses your LLM, and none is set up yet (${env.llm.disabledReason}).\n` +
-        "Run `pnpm onboard` to add one, or start from a preset: see docs/profiles.md."
+        `Run \`${commandHint("onboard")}\` to add one, or start from a preset: see docs/profiles.md.`
     );
   }
 
@@ -78,13 +78,13 @@ async function main(): Promise<void> {
       rl.close();
     }
     if (answer && answer !== "y" && answer !== "yes") {
-      console.log("Discarded; your preferences are unchanged. (Small tweaks are easier with `pnpm profile:edit`.)");
+      console.log(`Discarded; your preferences are unchanged. (Small tweaks are easier with \`${commandHint("profile:edit")}\`.)`);
       return;
     }
   }
 
   saveNewProfileVersion(context, draft.yaml);
-  console.log("Fine-tune later with: pnpm profile:edit \"what to change\"");
+  console.log(`Fine-tune later with: ${commandHint("profile:edit", "\"what to change\"")}`);
 }
 
 main().catch((error) => {

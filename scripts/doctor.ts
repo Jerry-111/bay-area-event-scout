@@ -19,6 +19,7 @@ import {
   booleanFlag,
   buildDoctorChecks,
   buildDoctorJsonSummary,
+  commandHint,
   fetchWithTimeout,
   findRepoRoot,
   findUpPath,
@@ -144,7 +145,7 @@ function printFriendlyReport(checks: CheckResult[], liveChecks: CheckResult[]): 
 
   console.log();
   if (failing) {
-    console.log(`${failing} check(s) failed, ${warning} warning(s). Run \`pnpm onboard\` to fix configuration, then re-run \`pnpm scout:doctor\`.`);
+    console.log(`${failing} check(s) failed, ${warning} warning(s). Run \`${commandHint("onboard")}\` to fix configuration, then re-run \`${commandHint("scout:doctor")}\`.`);
   } else if (warning) {
     console.log(`All required checks passed, ${warning} warning(s) worth a look.`);
   } else {

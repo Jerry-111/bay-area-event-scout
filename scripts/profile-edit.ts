@@ -18,6 +18,7 @@ import { createInterface } from "node:readline/promises";
 import { resolve } from "node:path";
 import {
   booleanFlag,
+  commandHint,
   findRepoRoot,
   planProfileWrite,
   parseFlags,
@@ -47,21 +48,21 @@ async function main(): Promise<void> {
   if (!context.selection || context.currentYaml === undefined) {
     throw new Error(
       `Your current preferences could not be loaded:\n  ${context.profileError}\n` +
-        "Run `pnpm profile:undo` to go back to the previous version, or `pnpm profile:new` to start over."
+        `Run \`${commandHint("profile:undo")}\` to go back to the previous version, or \`${commandHint("profile:new")}\` to start over.`
     );
   }
 
   console.log(`Your preferences (${context.selection.source}):\n`);
   printProfile(context.selection.profile);
   if (booleanFlag(flags, "show")) {
-    console.log("\nTo change them: pnpm profile:edit \"what you'd like to change\"");
+    console.log(`\nTo change them: ${commandHint("profile:edit", "\"what you'd like to change\"")}`);
     return;
   }
 
   if (!context.env.llm.enabled) {
     throw new Error(
       `\nChanging preferences with a sentence uses your LLM, and none is set up yet (${context.env.llm.disabledReason}).\n` +
-        "Run `pnpm onboard` to add one, or edit the profile file by hand (see docs/profiles.md)."
+        `Run \`${commandHint("onboard")}\` to add one, or edit the profile file by hand (see docs/profiles.md).`
     );
   }
 
@@ -126,7 +127,7 @@ function undo(root: string): void {
     return;
   }
   swapProfileBackup(targetPath);
-  console.log(`Restored the previous version of ${displayPath(root, targetPath)}. (Run pnpm profile:undo again to redo.)\n`);
+  console.log(`Restored the previous version of ${displayPath(root, targetPath)}. (Run ${commandHint("profile:undo")} again to redo.)\n`);
   try {
     printProfile(readProfileFile(targetPath));
   } catch (error) {

@@ -5,7 +5,7 @@
 一个帮你发现旧金山湾区（SF Bay Area）高质量小型活动的 scout：founder dinner、salon、roundtable 这类很少出现在大型活动日历上的局。它会搜索公开日历、newsletter、网页和 X，读取每个活动页面，按**你自己的**偏好打分，然后把精选结果推送到 Telegram，并提供一个方便团队一起筛选的 dashboard。
 
 - **覆盖面广。** 除了 Luma 的公开页面，还会扫描 100 多个精选的湾区日历、活动汇总和 newsletter，并通过官方 X API 捕捉那些只在 X 上发布的活动。每次运行都会让 LLM 生成新的搜索词，避免反复搜同样的东西。
-- **用大白话设置偏好。** 想多看/少看的方向、活动形式、想认识的人、优质场地、坚决不要的东西、推荐分数线，都在一个 [scout profile](docs/profiles.md) 里。可以从预设开始（B2B SaaS、climate tech、fintech、consumer AI），也可以用一句话描述自己；之后同样用一句话修改：`pnpm profile:edit "加上 climate tech，不要 crypto"`。
+- **用大白话设置偏好。** 想多看/少看的方向、活动形式、想认识的人、优质场地、坚决不要的东西、推荐分数线，都在一个 [scout profile](docs/profiles.md) 里。可以从预设开始（B2B SaaS、climate tech、fintech、consumer AI），也可以用一句话描述自己；之后同样用一句话修改，比如"加上 climate tech，不要 crypto"。
 - **LLM 随便换。** 支持 OpenAI、Anthropic、Gemini、DeepSeek、通义千问/DashScope、OpenRouter、Ollama，以及任何 OpenAI 兼容接口。详见 [LLM providers](docs/llm-providers.md)。
 - **打分可解释。** 每个活动都有 0-100 分、分项明细，以及说明是哪条偏好影响了分数的理由。详见 [scoring](docs/scoring.md)。
 - **运行成本低，预算自己定。** 每月最低约 $2，见[配置与费用](docs/setup-and-costs.zh-CN.md)。
@@ -15,7 +15,7 @@
 | | 需要什么 | 适合 |
 | --- | --- | --- |
 | **[用 GitHub 每天推送](docs/github-actions.zh-CN.md)** | 一个 GitHub 账号、一个 LLM key、一个 Telegram 机器人，什么都不用装 | 大多数人。在浏览器里大约 10 分钟配置完 |
-| **[在自己电脑上运行](#在自己电脑上运行)** | Node.js 和终端 | 先试试、用 dashboard、自己折腾 |
+| **[在自己电脑上运行](#在自己电脑上运行)** | Node.js，然后只要一个命令：`npm start` | 用 dashboard、先试试、自己折腾 |
 | **[团队线上部署](docs/operations.md)** | Trigger.dev、Postgres、一个 Node 主机 | 团队共用 dashboard，定时扫描 |
 
 ## 要花多少钱
@@ -32,32 +32,34 @@
 
 ## 在自己电脑上运行
 
-### 先试一下（2 分钟，不需要任何 key）
-
-需要 **Node.js 22 或更新版本**（[下载 LTS 安装包](https://nodejs.org/zh-cn/download)）和 **pnpm**。获取 pnpm：运行一次 `corepack enable`（Mac 上如果提示没有权限，改用 `sudo corepack enable`），或者 `npm install -g pnpm`。然后下载代码：会用 git 的话直接 clone；不会的话，在 GitHub 页面点 **Code → Download ZIP** 再解压。
+需要 **Node.js 22 或更新版本**。没有的话，从 [nodejs.org](https://nodejs.org/zh-cn/download) 下载 LTS 安装包装上（只需一次）。然后在终端里运行：
 
 ```sh
 git clone https://github.com/Jerry-111/bay-area-event-scout.git
 cd bay-area-event-scout
-pnpm install        # 安装依赖并编译
-pnpm scout:mock     # 用示例数据跑一遍完整流程
-pnpm admin          # dashboard：http://127.0.0.1:4310
+npm start
 ```
 
-### 正式配置（约 5 分钟）
+没有 git？在 GitHub 页面点 **Code → Download ZIP**，解压后在那个文件夹里打开终端。Mac：打开"终端"，输入 `cd `（后面带一个空格），把文件夹拖进窗口，按回车。Windows：打开文件夹，点地址栏，输入 `cmd`，按回车。然后运行 `npm start`。
 
-```sh
-pnpm onboard        # 引导式配置：LLM、搜索 key、Telegram、预算和你的偏好
-pnpm scout:doctor   # 检查配置；加 --live 会实际测试 key 是否可用
-pnpm scout:real     # 真实扫描（结果保存在 .scout-data/）
-pnpm admin          # 查看、打分、分享结果
+只需要这一个命令。第一次运行时，`npm start` 会自动安装（一两分钟），问几个配置问题（每一项都可以直接按回车跳过；没有 LLM key 时显示示例数据），然后在浏览器里打开 dashboard。之后每次运行 `npm start` 都会显示一个菜单：
+
+```text
+What would you like to do?
+  1) Scan for new events, then open the dashboard (last scan: 2 days ago)
+  2) Open the dashboard
+  3) Show or change my preferences
+  4) Change keys, Telegram, budget, or preferences (setup)
+  5) Check my setup
 ```
 
-`pnpm onboard` 一次只问一个问题，并解释每一项。它会自动帮你找到 Telegram 的 chat id，并把 key 写进 `.env.local`（已被 gitignore，且只有你本人可读）。喜欢手动改文件的话，把 `.env.example` 复制成 `.env.local` 再填写即可。
+一次扫描大约 3–10 分钟，过程中会显示进度；dashboard 会一直开着，按 Ctrl+C 关闭。也可以跳过菜单直接运行：`npm start scan`、`npm start dashboard`、`npm start setup`、`npm start preferences`、`npm start undo`、`npm start doctor`。
+
+配置会把 key 保存在 `.env.local`（已被 gitignore，且只有你本人可读），扫描结果保存在 `.scout-data/`。开发者也可以用下面[常用命令](#常用命令)里的 `pnpm` 命令一步步单独运行。
 
 ## 改成你自己的偏好
 
-偏好（也就是 "scout profile"）决定了一切：搜什么、哪些候选在调用 LLM 之前就被过滤掉、打分 prompt、以及推荐分数线。你完全不用碰 YAML：
+偏好（也就是 "scout profile"）决定了一切：搜什么、哪些候选在调用 LLM 之前就被过滤掉、打分 prompt、以及推荐分数线。你完全不用碰 YAML：运行 `npm start preferences`（或者在菜单里选），它会先显示 scout 现在在找什么，再问你想改什么，比如"多一些 B2B go-to-market 的饭局，加上 climate tech，不要 crypto"；`npm start undo` 可以撤销。用 pnpm 的话，也可以一行搞定：
 
 ```sh
 pnpm profile:show                                     # 看看 scout 现在在找什么
@@ -96,6 +98,7 @@ thresholds:
 
 | 命令 | 作用 |
 | --- | --- |
+| `npm start` | 一站式：安装、配置、扫描、dashboard、修改偏好（菜单） |
 | `pnpm onboard` | 引导式配置 `.env.local`、预算和偏好 |
 | `pnpm scout:doctor` | 配置自检（`--live` 实测 key；`pnpm config:check` 输出 JSON） |
 | `pnpm profile:show` | 用大白话显示当前偏好 |

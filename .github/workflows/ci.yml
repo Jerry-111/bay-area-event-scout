@@ -44,3 +44,23 @@ jobs:
           cp -r profiles "$tmp/"
           pnpm onboard --yes --provider none --profile fintech --root "$tmp"
           grep -q '^SCOUT_PROFILE=fintech' "$tmp/.env.local"
+
+  launcher:
+    # What a newcomer does: only Node.js installed, then `npm start` (no pnpm set up beforehand).
+    name: npm start on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Install, sample scan, and dashboard health check
+        run: npm start -- --check

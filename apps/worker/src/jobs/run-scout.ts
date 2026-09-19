@@ -29,6 +29,7 @@ import {
   describeLlm,
   filterEventsInFutureWindow,
   getLogFormat,
+  isMainModule,
   loadRuntimeEnv,
   normalizeRawCandidate
 } from "@event-scout/shared";
@@ -951,7 +952,7 @@ function localDateKey(date: Date): string {
   }).format(date);
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isMainModule(import.meta.url)) {
   await runScout();
 }
 

@@ -13,7 +13,7 @@ preferences, and sends a short digest to Telegram, plus a dashboard your team ca
 - **Your preferences, in plain words.** Topics you want more or less of, formats, people, venues,
   hard no's, and the score bar live in one [scout profile](docs/profiles.md). Start from a preset
   (B2B SaaS, climate tech, fintech, consumer AI), or describe yourself in a sentence. Change it later
-  the same way: `pnpm profile:edit "add climate tech, no crypto"`.
+  the same way, e.g. "add climate tech, no crypto".
 - **Bring your own LLM.** OpenAI, Anthropic, Gemini, DeepSeek, Qwen/DashScope, OpenRouter, Ollama,
   or any OpenAI-compatible endpoint. See [LLM providers](docs/llm-providers.md).
 - **Explainable scores.** Every event gets a 0-100 score with a breakdown and a rationale that names
@@ -26,7 +26,7 @@ preferences, and sends a short digest to Telegram, plus a dashboard your team ca
 | | What you need | Good for |
 | --- | --- | --- |
 | **[Daily digest on GitHub](docs/github-actions.md)** | A GitHub account, an LLM key, and a Telegram bot. Nothing to install. | Most people. About 10 minutes of setup in the browser. |
-| **[On your computer](#on-your-computer)** | Node.js and a terminal | Trying it out, the dashboard, tinkering |
+| **[On your computer](#on-your-computer)** | Node.js, then one command: `npm start` | The dashboard, trying it out, tinkering |
 | **[Hosted for a team](docs/operations.md)** | Trigger.dev, Postgres, and a Node host | A shared dashboard with scheduled scans |
 
 ## What it costs
@@ -46,33 +46,41 @@ compares LLM prices.
 
 ## On your computer
 
-### Try it (2 minutes, no keys)
-
-You need **Node.js 22 or newer** ([download the LTS installer](https://nodejs.org/en/download)) and
-**pnpm**. To get pnpm, run `corepack enable` once (on a Mac, if it says permission denied, run
-`sudo corepack enable`), or `npm install -g pnpm`. Then get the code: with git, clone it; without
-git, use **Code → Download ZIP** on GitHub and unzip it.
+You need **Node.js 22 or newer**. If you don't have it, download the LTS installer from
+[nodejs.org](https://nodejs.org/en/download) and run it (one time). Then, in a terminal:
 
 ```sh
 git clone https://github.com/Jerry-111/bay-area-event-scout.git
 cd bay-area-event-scout
-pnpm install        # installs and builds everything
-pnpm scout:mock     # the full pipeline on sample data
-pnpm admin          # dashboard at http://127.0.0.1:4310
+npm start
 ```
 
-### Set it up for real (about 5 minutes)
+No git? On GitHub, click **Code → Download ZIP**, unzip it, and open a terminal in that folder.
+On a Mac: open Terminal, type `cd ` (with a space), drag the folder onto the window, and press
+Enter. On Windows: open the folder, click its address bar, type `cmd`, and press Enter. Then run
+`npm start`.
 
-```sh
-pnpm onboard        # guided setup: LLM, search keys, Telegram, budget, and your preferences
-pnpm scout:doctor   # checks your setup; add --live to test the keys
-pnpm scout:real     # a real scan (results are saved to .scout-data/)
-pnpm admin          # review, rate, and share the results
+That's the only command you need. The first time, `npm start` installs everything (a minute or
+two) and asks a few setup questions. Press Enter to skip any of them; without an LLM key you
+see sample data. Then it opens the dashboard in your browser. After that, `npm start` shows a
+short menu:
+
+```text
+What would you like to do?
+  1) Scan for new events, then open the dashboard (last scan: 2 days ago)
+  2) Open the dashboard
+  3) Show or change my preferences
+  4) Change keys, Telegram, budget, or preferences (setup)
+  5) Check my setup
 ```
 
-`pnpm onboard` asks one question at a time and explains each one. It finds your Telegram chat for
-you, and writes your keys to `.env.local` (gitignored, readable only by you). Prefer editing files
-by hand? Copy `.env.example` to `.env.local` and fill it in.
+A scan takes 3–10 minutes and shows its progress as it goes. The dashboard stays up until you
+press Ctrl+C. Shortcuts skip the menu: `npm start scan`, `npm start dashboard`,
+`npm start setup`, `npm start preferences`, `npm start undo`, and `npm start doctor`.
+
+Setup saves your keys in `.env.local` (gitignored, readable only by you) and results in
+`.scout-data/`. Developers can use the `pnpm` commands under [Commands](#commands) to run each
+step on its own.
 
 A digest looks like this (example):
 
@@ -103,7 +111,10 @@ Link: https://lu.ma/example-demo-night
 ## Make it yours
 
 Your preferences (the "scout profile") drive everything: the searches, what gets filtered out
-before any LLM spend, the scoring prompt, and the score bar. You never have to touch YAML:
+before any LLM spend, the scoring prompt, and the score bar. You never have to touch YAML.
+Run `npm start preferences` (or pick it from the menu): it shows what the scout looks for now and
+asks what to change, for example "more B2B go-to-market dinners, add climate tech, no crypto".
+`npm start undo` puts the previous version back. With pnpm, the same things work as one-liners:
 
 ```sh
 pnpm profile:show                                     # what the scout is looking for now
@@ -168,6 +179,7 @@ More detail: [discovery](docs/discovery.md), [scoring](docs/scoring.md),
 
 | Command | What it does |
 | --- | --- |
+| `npm start` | Everything in one place: install, setup, scan, dashboard, preferences (a menu) |
 | `pnpm onboard` | Guided setup of `.env.local`, your budget, and your preferences |
 | `pnpm scout:doctor` | Configuration checklist (`--live` tests keys; `pnpm config:check` prints JSON) |
 | `pnpm profile:show` | Show your preferences in plain language |

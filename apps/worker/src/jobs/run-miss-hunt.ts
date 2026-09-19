@@ -7,6 +7,7 @@ import {
   createLogger,
   createRunStats,
   getLogFormat,
+  isMainModule,
   loadRuntimeEnv
 } from "@event-scout/shared";
 
@@ -110,7 +111,7 @@ function missHuntWeek(now: Date): { start: string; end: string } {
   };
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isMainModule(import.meta.url)) {
   const stats = await runMissHunt();
   // Same reasoning as the scout job: don't bury the pretty log lines above under a raw JSON dump.
   if (getLogFormat() !== "pretty") {

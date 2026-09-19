@@ -8,6 +8,7 @@ export * from "./doctor.js";
 export * from "./env-file.js";
 export * from "./llm-config.js";
 export * from "./logger.js";
+export * from "./main-module.js";
 export * from "./profile.js";
 export * from "./profile-files.js";
 export * from "./profile-summary.js";

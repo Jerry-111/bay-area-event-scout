@@ -6,6 +6,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import {
+  commandHint,
   DEFAULT_PROFILE,
   DEFAULT_PROFILE_NAME,
   PROFILES_DIR_NAME,
@@ -92,7 +93,7 @@ export function saveNewProfileVersion(context: ProfileContext, yaml: string): vo
       `Heads up: ${plan.scoutProfileSetElsewhere}, so scans keep using ${selection.source} until you remove that setting.`
     );
   }
-  if (backupPath) console.log("Changed your mind? Run: pnpm profile:undo");
+  if (backupPath) console.log(`Changed your mind? Run: ${commandHint("profile:undo")}`);
 }
 
 export function displayPath(root: string, path: string): string {

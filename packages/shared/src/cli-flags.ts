@@ -72,3 +72,26 @@ export function stringFlag(flags: FlagValues, name: string): string | undefined 
 export function booleanFlag(flags: FlagValues, name: string): boolean {
   return flags[name] === true;
 }
+
+/** What `npm start` (scripts/start.mjs) calls each of these package scripts. */
+const LAUNCHER_ACTIONS: Record<string, string> = {
+  onboard: "setup",
+  "scout:doctor": "doctor",
+  "scout:real": "scan",
+  admin: "dashboard",
+  "profile:show": "preferences",
+  "profile:edit": "preferences",
+  "profile:new": "preferences",
+  "profile:undo": "undo"
+};
+
+/**
+ * How to tell someone to run one of this repo's commands, e.g. `pnpm onboard`. People who came in
+ * through `npm start` (which sets SCOUT_LAUNCHER=npm-start for the scripts it runs) may not have
+ * pnpm on their PATH, so they get the launcher's version instead: `npm start setup`.
+ */
+export function commandHint(script: string, args?: string, env: NodeJS.ProcessEnv = process.env): string {
+  const action = env.SCOUT_LAUNCHER === "npm-start" ? LAUNCHER_ACTIONS[script] : undefined;
+  if (action) return `npm start ${action}`;
+  return args ? `pnpm ${script} ${args}` : `pnpm ${script}`;
+}

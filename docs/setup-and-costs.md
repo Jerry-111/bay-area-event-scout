@@ -23,7 +23,7 @@ feeds for free; they just find fewer events than with Exa.
 ## What it costs
 
 Two things decide the bill: how much each scan may do (`SCOUT_BUDGET`) and how many scans you run
-a day. `pnpm onboard` asks for a budget; GitHub Actions uses `small` unless you change it.
+a day. Setup (`npm start` or `pnpm onboard`) asks for a budget; GitHub Actions uses `small` unless you change it.
 
 | | `small` | `medium` | `large` |
 | --- | ---: | ---: | ---: |
@@ -80,7 +80,7 @@ deepseek-flash about $0.15 / $0.60 off-peak.
 
 ## Setting up each piece
 
-Where keys go: `pnpm onboard` writes them to `.env.local` on your computer (never commit that
+Where keys go: on your computer, setup (`npm start`) writes them to `.env.local` (never commit that
 file). For GitHub Actions, they go in your copy's **Settings → Secrets and variables → Actions**
 ([guide](github-actions.md)). For Trigger.dev, they go in the project's environment variables.
 
@@ -120,7 +120,7 @@ Other providers ([all options](llm-providers.md)):
 3. Open your new bot in Telegram and press **Start** (for a group digest, add the bot to the group
    and post a message there).
 4. Get the chat id (`TELEGRAM_CHAT_ID`) without reading any JSON:
-   - `pnpm onboard` finds it for you after step 3, and can send a test message.
+   - Setup (`npm start`, or `pnpm onboard`) finds it for you after step 3, and can send a test message.
    - Or run `pnpm telegram:chats`, which lists the chats that messaged your bot.
    - With GitHub Actions, run the **Telegram chat id** workflow ([guide](github-actions.md#4-telegram-chat-id)).
 
