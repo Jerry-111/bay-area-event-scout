@@ -51,6 +51,28 @@ novelty, evidence), and every card has feedback buttons for your team.
 
 <br clear="right">
 
+## Where it looks
+
+A curated list of 100+ Bay Area sources, plus fresh web searches that an LLM planner writes for
+each scan:
+
+- **Community calendars:** AI Tinkerers SF, South Park Commons, Founders Inc, Cerebral Valley,
+  AGI House, Frontier Tower, The AI Collective, Bond AI, Bay Area Founders Club, Latent.Space,
+  LangChain SF, AICamp, and dozens more groups on Luma and Meetup.
+- **Campuses, venues, and funds:** YC Startup School, StartX, Berkeley SkyDeck, Stanford HAI,
+  Entrepreneurs First, AWS Builder Loft, SHACK15, Pear VC, SignalFire, Fusion Fund.
+- **Event roundups and newsletters:** Gary's Guide, Sam's Guide, FounderCal SF, TLDR EVENTS,
+  Fog City Events, Eddie's List, Kyosuke's Newsletter.
+- **X** (optional, through the official API), for events hosts only announce there.
+
+The full list is in [`source-registry.ts`](packages/discovery/src/source-registry.ts), and your
+profile can [add or turn off](docs/profiles.md) any source.
+
+**Not in the Bay Area?** Set your city as the region in your profile and add your local
+calendars. The searches, the page reading, and the scoring all follow the region; see
+[Region](docs/profiles.md#region). If you put together a good source list for your city, please
+[share it in an issue](https://github.com/Jerry-111/bay-area-event-scout/issues/new?template=new_source.md).
+
 ## Three ways to run it
 
 | | Scans | Dashboard | Setup | Cost to run |
@@ -222,7 +244,8 @@ More detail: [discovery](docs/discovery.md), [scoring](docs/scoring.md),
 
 ## Contributing
 
-Suggestions for new Bay Area sources, profile presets, and LLM providers are especially welcome.
+Suggestions for new sources (in the Bay Area or your own city), profile presets, and LLM providers
+are especially welcome.
 See [CONTRIBUTING.md](CONTRIBUTING.md); security issues go through [SECURITY.md](SECURITY.md).
 
 If the scout finds you a good room, a ⭐ on the repo helps other founders find it too.

@@ -73,6 +73,10 @@ See [README.md](README.md) for the full pipeline overview.
 
 ### 1. Add a source to the source registry
 
+Sources for other cities don't belong in the built-in list yet, because it is Bay Area only and every
+scan reads it. Add them to your own profile with `sources.add` ([profiles](docs/profiles.md#region)),
+and share a good list in a "Suggest an event source" issue.
+
 Built-in Bay Area sources live in `FREE_PUBLIC_SOURCES` in
 [`packages/discovery/src/source-registry.ts`](packages/discovery/src/source-registry.ts). Each entry
 is a `RegistrySource`:

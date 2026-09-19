@@ -1,11 +1,15 @@
 ---
 name: Suggest an event source
-about: Point us at a Bay Area calendar, newsletter, organizer, or account the scout should scan
+about: Point us at a calendar, newsletter, organizer, or account the scout should scan, in the Bay Area or another city
 title: "[Source] "
 labels: source
 ---
 
 ## Source name
+
+## City
+
+SF Bay Area, or the city this source covers.
 
 ## URL
 
@@ -18,7 +22,7 @@ One of: `luma_calendar`, `rss_feed`, `event_digest`, `organizer_site`, `indexed_
 
 ## Why it's high-signal
 
-What makes this a good source for small, curated Bay Area founder/operator events? For example:
+What makes this a good source for small, curated founder/operator events? For example:
 approval-required or invite-only rooms, named hosts, consistently posts direct RSVP links, strong
 founder/operator/investor density.
 

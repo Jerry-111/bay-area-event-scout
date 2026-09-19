@@ -35,6 +35,19 @@
 
 <br clear="right">
 
+## 它在哪里找
+
+一份 100 多个湾区来源的精选清单，加上每次扫描时 LLM planner 新写的网页搜索：
+
+- **社区活动日历：** AI Tinkerers SF、South Park Commons、Founders Inc、Cerebral Valley、AGI House、Frontier Tower、The AI Collective、Bond AI、Bay Area Founders Club、Latent.Space、LangChain SF、AICamp，以及 Luma 和 Meetup 上的几十个湾区社群。
+- **学校、场地和基金：** YC Startup School、StartX、Berkeley SkyDeck、Stanford HAI、Entrepreneurs First、AWS Builder Loft、SHACK15、Pear VC、SignalFire、Fusion Fund。
+- **活动汇总和 newsletter：** Gary's Guide、Sam's Guide、FounderCal SF、TLDR EVENTS、Fog City Events、Eddie's List、Kyosuke's Newsletter。
+- **X**（可选，通过官方 API）：捕捉那些只在 X 上发布的活动。
+
+完整清单在 [`source-registry.ts`](packages/discovery/src/source-registry.ts)，你的 profile 可以[增加或关掉](docs/profiles.md)任意来源。
+
+**不在湾区？** 在 profile 里把 region 改成你的城市，再加上本地的活动日历。搜索、读取活动页面和打分都会跟着 region 走，详见 [Region](docs/profiles.md#region)。如果你整理出了一份不错的本地来源清单，欢迎[发一个 issue 分享出来](https://github.com/Jerry-111/bay-area-event-scout/issues/new?template=new_source.md)。
+
 ## 三种用法
 
 | | 扫描 | Dashboard | 配置 | 运行费用 |
@@ -125,6 +138,24 @@ thresholds:
 - **云端版（免费）：** [GitHub Actions](docs/github-actions.zh-CN.md) 在你自己的私有仓库里每天扫描两次（设置 `SCANS_PER_DAY` 可改成 1 或 3 次），结果推送到 Telegram，每周还会回头找一次漏掉的活动。
 - **团队版：** 把 worker 部署到 [Trigger.dev](https://trigger.dev)（太平洋时间每天 09:00、14:00、22:00 扫描，外加每周一次的漏检回顾），结果存进 Postgres，dashboard 部署到 Railway 或任何 Node 主机（记得设置 `ADMIN_PASSWORD`）。详见 [operations](docs/operations.md) 和 [admin deploy](docs/admin-railway-deploy.md)。
 
+## 工作原理
+
+```
+your profile ─┬─> query packs + LLM search planner
+              │         │
+              │         v
+              │   discovery: Exa · X API · public calendars · RSS · Luma seeds
+              │         │
+              ├─> pre-filter (profile exclusions, past dates) ──> rejected, with reasons
+              │         │
+              │         v
+              │   page fetch (Firecrawl or plain fetch) ─> LLM extraction ─> dedupe
+              │         │
+              └─> LLM scoring + profile topic weights ─> thresholds ─> digest + dashboard
+```
+
+你的 profile 决定搜什么；调用 LLM 之前，先按 profile 的排除规则和过期日期把候选过滤一遍（被过滤的都会写明原因）；剩下的读取活动页面、抽取信息、去重，再按你的偏好打分，过线的进推送和 dashboard。更多细节：[discovery](docs/discovery.md)、[scoring](docs/scoring.md)、[source strategy](docs/free-source-strategy.md)。
+
 ## 常用命令
 
 | 命令 | 作用 |
@@ -142,9 +173,22 @@ thresholds:
 | `pnpm telegram:test` | 用当前 Telegram 配置发一条测试消息 |
 | `pnpm test` | 类型检查 + 全部测试 |
 
+## 目录结构
+
+- `apps/worker`：定时扫描和每周的漏检回顾（Trigger.dev 任务在 `src/trigger`）
+- `apps/admin`：dashboard，带给团队用的反馈按钮
+- `packages/discovery`：各个来源的连接器、query pack、来源清单、候选过滤
+- `packages/intelligence`：读取页面、LLM 客户端、信息抽取、打分、去重、修改 profile
+- `packages/notify`：推送内容和 Telegram
+- `packages/db`：Postgres、本地文件和内存三种存储
+- `packages/shared`：环境变量、预算、profile schema、LLM provider 配置
+- `profiles/`：预设 profile
+- `scripts/`：`onboard`、`doctor`、`profile:*` 命令和 `telegram:chats`
+- `.github/workflows/`：CI，以及 GitHub Actions 用的 Scout、Preferences、Telegram chat id 工作流
+
 ## 参与贡献
 
-特别欢迎补充新的湾区活动来源、profile 预设和 LLM provider。见 [CONTRIBUTING.md](CONTRIBUTING.md)；安全问题请按 [SECURITY.md](SECURITY.md) 私下报告。
+特别欢迎补充新的活动来源（湾区或你所在的城市）、profile 预设和 LLM provider。见 [CONTRIBUTING.md](CONTRIBUTING.md)；安全问题请按 [SECURITY.md](SECURITY.md) 私下报告。
 
 如果 scout 帮你找到了一个好局，给仓库点个 ⭐，能让更多 founder 发现它。
 
